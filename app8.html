@@ -167,6 +167,9 @@
   .checkin-progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
   .checkin-footer { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-dim); }
   .checkin-target.done { color: var(--green); font-weight: 600; }
+  .checkin-btn.simple-toggle { width: auto; min-width: 70px; height: 32px; border-radius: 16px; padding: 0 14px; font-size: 13px; font-weight: 600; }
+  .checkin-btn.simple-toggle.done { background: var(--green-soft); border-color: var(--green); color: var(--green); }
+  .simple-card .checkin-footer { margin-top: 10px; }
   .task-actions { display: flex; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
   .task-edit-btn, .task-del-btn { flex: 1; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 11px; cursor: pointer; }
   .task-edit-btn { color: var(--blue); }
@@ -549,13 +552,19 @@ function migrateData() {
 // 默认打卡任务（首次使用时初始化）
 const DEFAULT_CHECKIN_TASKS = [
   { id: 'face', name: '脸部按摩', desc: '每天2次', target: 2, targetType: 'day', color: '#ec4899' },
-  { id: 'exercise', name: '运动', desc: '每周3次', target: 3, targetType: 'week', color: '#10b981' },
-  { id: 'tea', name: '养生茶', desc: '每周3次', target: 3, targetType: 'week', color: '#f59e0b' },
+  { id: 'exercise', name: '运动', desc: '简单打卡', target: 1, targetType: 'day', color: '#10b981', simple: true },
+  { id: 'tea', name: '养生茶', desc: '简单打卡', target: 1, targetType: 'day', color: '#f59e0b', simple: true },
 ];
 const TASK_COLORS = ['#ec4899','#10b981','#f59e0b','#f97316','#3b82f6','#8b5cf6','#ef4444','#06b6d4','#84cc16','#a855f7'];
 // 获取当前打卡任务列表（从数据里读，兼容旧版固定任务）
 function getCheckinTasks() {
   if (!allData._tasks) allData._tasks = DEFAULT_CHECKIN_TASKS.map(t => ({...t}));
+  // 迁移：给已存在的 exercise/tea 任务补上 simple 标记（v9 新增）
+  allData._tasks.forEach(t => {
+    if (t.id === 'exercise' || t.id === 'tea') {
+      t.simple = true; t.target = 1; t.targetType = 'day'; t.desc = '简单打卡';
+    }
+  });
   return allData._tasks;
 }
 // 保存任务列表
@@ -661,20 +670,37 @@ function renderCheckins() {
   grid.innerHTML = '';
   getCheckinTasks().forEach((t, idx) => {
     const todayCount = getCheckinData(currentDate, t.id);
-    const isDay = !t.targetType || t.targetType === 'day';
-    const progressCount = isDay ? todayCount : getWeekCheckinCount(t.id);
-    const progressTarget = t.target;
-    const progressLabel = isDay ? '今日 ' + todayCount + '/' + t.target : '本周 ' + progressCount + '/' + t.target;
-    const pct = Math.min(100, Math.round(progressCount / progressTarget * 100));
-    const isDone = progressCount >= progressTarget;
     const total = getTotalCheckinCount(t.id);
     const card = document.createElement('div');
-    card.className = 'checkin-card';
-    card.innerHTML = '<div class="checkin-header"><div><div class="checkin-name">' + t.name + '</div><div class="checkin-desc">' + t.desc + '</div></div><div class="checkin-controls"><button class="checkin-btn minus" onclick="adjustCheckin(\'' + t.id + '\', -1)">−</button><span class="checkin-count" style="color:' + t.color + '">' + todayCount + '</span><button class="checkin-btn plus" onclick="adjustCheckin(\'' + t.id + '\', 1)">+</button></div></div>' +
-      '<div class="checkin-progress"><div class="checkin-progress-bar"><div class="checkin-progress-fill" style="width:' + pct + '%;background:' + t.color + '"></div></div><div class="checkin-footer"><span class="checkin-target ' + (isDone ? 'done' : '') + '">' + progressLabel + (isDone ? ' ✓' : '') + '</span><span>累计 ' + total + ' 次</span></div></div>' +
-      '<div class="task-actions"><button class="task-edit-btn" onclick="editCheckinTask(' + idx + ')">✏️ 编辑</button><button class="task-del-btn" onclick="removeCheckinTask(' + idx + ')">🗑 删除</button></div>';
+    card.className = 'checkin-card' + (t.simple ? ' simple-card' : '');
+    card.dataset.taskId = t.id;
+    if (t.simple) {
+      // 简单打卡：只显示一个打卡按钮，已打卡显示状态
+      const isDone = todayCount > 0;
+      card.innerHTML = '<div class="checkin-header"><div><div class="checkin-name">' + t.name + '</div><div class="checkin-desc">' + t.desc + '</div></div><div class="checkin-controls"><button class="checkin-btn simple-toggle' + (isDone ? ' done' : '') + '" onclick="toggleSimpleCheckin(\'' + t.id + '\')">' + (isDone ? '✓ 已打卡' : '打卡') + '</button></div></div>' +
+        '<div class="checkin-footer"><span class="checkin-target ' + (isDone ? 'done' : '') + '">' + (isDone ? '今日已打卡 ✓' : '今日未打卡') + '</span><span>累计 ' + total + ' 次</span></div>' +
+        '<div class="task-actions"><button class="task-edit-btn" onclick="editCheckinTask(' + idx + ')">✏️ 编辑</button><button class="task-del-btn" onclick="removeCheckinTask(' + idx + ')">🗑 删除</button></div>';
+    } else {
+      const isDay = !t.targetType || t.targetType === 'day';
+      const progressCount = isDay ? todayCount : getWeekCheckinCount(t.id);
+      const progressTarget = t.target;
+      const progressLabel = isDay ? '今日 ' + todayCount + '/' + t.target : '本周 ' + progressCount + '/' + t.target;
+      const pct = Math.min(100, Math.round(progressCount / progressTarget * 100));
+      const isDone = progressCount >= progressTarget;
+      card.innerHTML = '<div class="checkin-header"><div><div class="checkin-name">' + t.name + '</div><div class="checkin-desc">' + t.desc + '</div></div><div class="checkin-controls"><button class="checkin-btn minus" onclick="adjustCheckin(\'' + t.id + '\', -1)">−</button><span class="checkin-count" style="color:' + t.color + '">' + todayCount + '</span><button class="checkin-btn plus" onclick="adjustCheckin(\'' + t.id + '\', 1)">+</button></div></div>' +
+        '<div class="checkin-progress"><div class="checkin-progress-bar"><div class="checkin-progress-fill" style="width:' + pct + '%;background:' + t.color + '"></div></div><div class="checkin-footer"><span class="checkin-target ' + (isDone ? 'done' : '') + '">' + progressLabel + (isDone ? ' ✓' : '') + '</span><span>累计 ' + total + ' 次</span></div></div>' +
+        '<div class="task-actions"><button class="task-edit-btn" onclick="editCheckinTask(' + idx + ')">✏️ 编辑</button><button class="task-del-btn" onclick="removeCheckinTask(' + idx + ')">🗑 删除</button></div>';
+    }
     grid.appendChild(card);
   });
+}
+function toggleSimpleCheckin(taskId) {
+  if (currentDate > getTodayStr()) { showToast('未来的日子还没到哦 ✨'); return; }
+  const current = getCheckinData(currentDate, taskId);
+  setCheckinData(currentDate, taskId, current > 0 ? 0 : 1);
+  updateCheckinCard(taskId);
+  renderTopDate(); renderHistory(); renderAnalysis();
+  showToast(current > 0 ? '已取消打卡' : '打卡成功 ✓');
 }
 function adjustCheckin(taskId, delta) {
   if (currentDate > getTodayStr()) { showToast('未来的日子还没到哦 ✨'); return; }
@@ -689,23 +715,35 @@ function updateCheckinCard(taskId) {
   const cards = document.querySelectorAll('.checkin-card');
   const t = getCheckinTasks().find(x => x.id === taskId);
   if (!t) return;
-  const card = [].find.call(cards, function(c){ return c.querySelector('.checkin-name').textContent === t.name; });
+  const card = [].find.call(cards, function(c){ return c.dataset.taskId === taskId; });
   if (!card) return;
   const todayCount = getCheckinData(currentDate, t.id);
-  const isDay = !t.targetType || t.targetType === 'day';
-  const progressCount = isDay ? todayCount : getWeekCheckinCount(t.id);
-  const pct = Math.min(100, Math.round(progressCount / t.target * 100));
-  const isDone = progressCount >= t.target;
-  card.querySelector('.checkin-count').textContent = todayCount;
-  const fill = card.querySelector('.checkin-progress-fill');
-  if (fill) fill.style.width = pct + '%';
-  const labelEl = card.querySelector('.checkin-target');
-  if (labelEl) {
-    labelEl.textContent = (isDay ? '今日 ' + todayCount + '/' + t.target : '本周 ' + progressCount + '/' + t.target) + (isDone ? ' ✓' : '');
-    labelEl.classList.toggle('done', isDone);
+  const total = getTotalCheckinCount(t.id);
+  if (t.simple) {
+    // 简单打卡：更新按钮和标签
+    const isDone = todayCount > 0;
+    const btn = card.querySelector('.simple-toggle');
+    if (btn) { btn.textContent = isDone ? '✓ 已打卡' : '打卡'; btn.classList.toggle('done', isDone); }
+    const labelEl = card.querySelector('.checkin-target');
+    if (labelEl) { labelEl.textContent = isDone ? '今日已打卡 ✓' : '今日未打卡'; labelEl.classList.toggle('done', isDone); }
+    const totalEl = card.querySelector('.checkin-footer span:last-child');
+    if (totalEl) totalEl.textContent = '累计 ' + total + ' 次';
+  } else {
+    const isDay = !t.targetType || t.targetType === 'day';
+    const progressCount = isDay ? todayCount : getWeekCheckinCount(t.id);
+    const pct = Math.min(100, Math.round(progressCount / t.target * 100));
+    const isDone = progressCount >= t.target;
+    card.querySelector('.checkin-count').textContent = todayCount;
+    const fill = card.querySelector('.checkin-progress-fill');
+    if (fill) fill.style.width = pct + '%';
+    const labelEl = card.querySelector('.checkin-target');
+    if (labelEl) {
+      labelEl.textContent = (isDay ? '今日 ' + todayCount + '/' + t.target : '本周 ' + progressCount + '/' + t.target) + (isDone ? ' ✓' : '');
+      labelEl.classList.toggle('done', isDone);
+    }
+    const totalEl = card.querySelector('.checkin-footer span:last-child');
+    if (totalEl) totalEl.textContent = '累计 ' + total + ' 次';
   }
-  const totalEl = card.querySelector('.checkin-footer span:last-child');
-  if (totalEl) totalEl.textContent = '累计 ' + getTotalCheckinCount(t.id) + ' 次';
 }
 
 // === 打卡任务增删改 ===
