@@ -105,6 +105,7 @@
   .dc-day.period { background: var(--red); color: #fff; }
   .dc-day.predict { background: rgba(236,72,153,0.35); }
   .dc-day.ovu::after { content: ""; position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); }
+  .dc-day.future { color: var(--text-dim); opacity: 0.4; cursor: not-allowed; }
   .dc-day.has-data::before { content: ""; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
   .date-cal-backdrop { display: none; }
 
@@ -588,9 +589,12 @@ if (!allData._album) allData._album = [];
 let currentPhotoIndex = -1;
 
 function getDayData(date) {
-  if (!allData[date]) allData[date] = { sleep: '', wake: '', diary: [], checkins: {} };
+  // 未来日期不创建持久记录（只读临时对象，避免污染已有数据）
+  if (date > getTodayStr()) return { sleep: '', wake: '', diary: [], checkins: {}, photos: [], _future: true };
+  if (!allData[date]) allData[date] = { sleep: '', wake: '', diary: [], checkins: {}, photos: [] };
   if (!allData[date].checkins) allData[date].checkins = {};
   if (!allData[date].diary) allData[date].diary = [];
+  if (!allData[date].photos) allData[date].photos = [];
   return allData[date];
 }
 
@@ -616,6 +620,7 @@ function autoFormatTime(input) {
 }
 // 失焦时补全：输 235 自动变 02:35（前面补0）
 function finalizeTime(input) {
+  if (currentDate > getTodayStr()) { showToast('未来的日子还没到哦 ✨'); input.value = ''; return; }
   let v = input.value.replace(/\D/g, '');
   if (v.length === 0) return;
   if (v.length <= 2) { input.value = v.padStart(2,'0') + ':00'; return; }
@@ -675,6 +680,7 @@ function renderCheckins() {
   });
 }
 function adjustCheckin(taskId, delta) {
+  if (currentDate > getTodayStr()) { showToast('未来的日子还没到哦 ✨'); return; }
   const current = getCheckinData(currentDate, taskId);
   setCheckinData(currentDate, taskId, current + delta);
   renderCheckins(); renderTopDate(); renderHeatmap(); renderHistory(); renderAnalysis();
@@ -760,6 +766,7 @@ function renderAlbum() {
   grid.innerHTML = html;
 }
 function handleAlbumUpload(input) {
+  if (currentDate > getTodayStr()) { showToast('未来的日子还没到哦 ✨'); input.value = ''; return; }
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -912,6 +919,7 @@ function toggleDiaryDone(idx) {
   renderDiary();
 }
 function saveDiary() {
+  if (currentDate > getTodayStr()) { showToast('未来的日子还没到哦 ✨'); return; }
   const day = getDayData(currentDate);
   day.diary = normalizeDiary(day.diary);
   day.diary = day.diary.filter(t => t && t.text && t.text.trim());
@@ -1278,6 +1286,7 @@ function renderDateCal() {
   for (let d = 1; d <= daysInMonth; d++) {
     const ds = formatDate(new Date(y, m, d));
     const isToday = ds === todayStr;
+    const isFuture = ds > todayStr;
     const isSelected = ds === currentDate;
     const p = getPeriodCovering(ds);
     const isPeriod = !!p;
@@ -1287,10 +1296,15 @@ function renderDateCal() {
     if (allData[ds] && (allData[ds].sleep || allData[ds].checkins || (allData[ds].diary && allData[ds].diary.length))) cls += ' has-data';
     if (isToday) cls += ' today';
     if (isSelected) cls += ' selected';
+    if (isFuture) cls += ' future';
     if (isPeriod) cls += ' period';
     else if (isPredict) cls += ' predict';
     if (isOvu) cls += ' ovu';
-    h += '<div class="' + cls + '" onclick="selectDateCal(\'' + ds + '\')">' + d + '</div>';
+    if (isFuture) {
+      h += '<div class="' + cls + '">' + d + '</div>';
+    } else {
+      h += '<div class="' + cls + '" onclick="selectDateCal(\'' + ds + '\')">' + d + '</div>';
+    }
   }
   const totalCells = startWeek + daysInMonth;
   const nextPad = (7 - totalCells % 7) % 7;
@@ -1299,6 +1313,7 @@ function renderDateCal() {
   el.innerHTML = h;
 }
 function selectDateCal(dateStr) {
+  if (dateStr > getTodayStr()) { showToast('未来的日子还没到哦 ✨'); return; }
   currentDate = dateStr;
   renderAll();
 }
