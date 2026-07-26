@@ -79,19 +79,45 @@
   /* 右侧内容区 */
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
   .top-bar {
-    height: 56px;
+    height: 44px;
     background: var(--card);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 18px;
+    padding: 0 16px;
     flex-shrink: 0;
     position: relative;
   }
-  .top-date-wrap { display: flex; align-items: center; gap: 8px; }
-  .top-date { font-size: 15px; font-weight: 600; color: var(--text); }
-  .date-picker { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent); padding: 6px 12px; border: 1.5px solid var(--accent); border-radius: 12px; background: var(--accent-soft); }
+  .top-date-wrap { position: relative; display: flex; align-items: center; }
+  .top-date { display: none; }
+  .date-picker { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent); padding: 6px 14px; border: 1.5px solid var(--accent); border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; gap: 6px; }
+  .date-picker::after { content: "▾"; font-size: 10px; }
+  .date-cal {
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(-6px);
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 14px; width: 300px; max-width: 92vw; box-shadow: 0 10px 30px rgba(131,24,67,0.18);
+    z-index: 100; display: none; animation: fadeIn 0.2s;
+  }
+  .date-cal.active { display: block; transform: translateX(-50%) translateY(0); }
+  .dc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .dc-month { font-size: 15px; font-weight: 700; color: var(--text); }
+  .dc-nav { display: flex; gap: 8px; }
+  .dc-nav button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; }
+  .dc-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+  .dc-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .dc-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; cursor: pointer; background: transparent; color: var(--text); position: relative; }
+  .dc-day.other { color: var(--text-dim); opacity: 0.4; }
+  .dc-day.today { color: var(--green); font-weight: 700; }
+  .dc-day.selected { box-shadow: inset 0 0 0 2px var(--accent); }
+  .dc-day.period { background: var(--red); color: #fff; }
+  .dc-day.predict { background: rgba(236,72,153,0.35); }
+  .dc-day.ovu::after { content: ""; position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); }
+  .dc-legend { display: flex; justify-content: center; gap: 10px; margin-top: 10px; font-size: 10px; color: var(--text-dim); }
+  .dc-legend span { display: flex; align-items: center; gap: 4px; }
+  .dc-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .date-cal-backdrop { position: fixed; inset: 0; z-index: 99; display: none; }
+  .date-cal-backdrop.active { display: block; }
 
   .content {
     flex: 1;
@@ -330,29 +356,29 @@
 
 
   /* 顶部睡眠条 */
-  .sleep-bar { background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 16px; flex-shrink: 0; }
+  .sleep-bar { background: var(--card); border-bottom: 1px solid var(--border); padding: 10px 16px; flex-shrink: 0; }
   .sleep-bar .sleep-row { display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; border-radius: 0; padding: 0; margin-bottom: 0; }
   .sleep-bar .sleep-info { display: flex; flex-direction: column; gap: 2px; }
-  .sleep-bar .sleep-result { font-size: 11px; color: var(--blue); margin-top: 6px; text-align: right; }
+  .sleep-bar .sleep-desc { display: none; }
+  .sleep-bar .sleep-result { font-size: 11px; color: var(--blue); margin-top: 4px; text-align: right; min-height: 0; }
 
   /* 经期开关 */
-  .period-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg); border-radius: 14px; margin-bottom: 10px; border: 1px solid var(--border); }
+  .period-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--bg); border-radius: 14px; border: 1px solid var(--border); }
   .period-toggle-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
   .period-toggle-icon { font-size: 18px; }
-  .period-toggle-controls { display: flex; align-items: center; gap: 10px; }
   .toggle-group { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
-  .toggle-btn { padding: 7px 16px; border: none; background: var(--card); color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .toggle-btn { padding: 7px 18px; border: none; background: var(--card); color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
   .toggle-btn.selected { background: var(--accent); color: #fff; }
-  .period-date-input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 10px; font-size: 13px; width: 110px; }
 
   /* 相册选择器 */
-  .album-picker-body { background: var(--card); border-radius: 20px; padding: 24px; width: 90%; max-width: 320px; text-align: center; }
-  .album-picker-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+  #albumPickerModal { background: rgba(0,0,0,0.92); }
+  .album-picker-body { background: transparent; padding: 24px; width: 90%; max-width: 320px; text-align: center; }
+  .album-picker-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 32px; opacity: 0.9; }
   .album-picker-main { position: relative; display: inline-block; }
-  .album-picker-big { width: 120px; height: 120px; border-radius: 50%; border: 2px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-size: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 14px rgba(236,72,153,0.25); }
+  .album-picker-big { width: 120px; height: 120px; border-radius: 50%; border: 4px solid #fff; background: transparent; color: #fff; font-size: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 0 4px rgba(255,255,255,0.2); }
   .album-picker-big span { font-size: 13px; font-weight: 600; margin-top: 4px; }
-  .album-picker-small { position: absolute; bottom: 0; right: 0; width: 44px; height: 44px; border-radius: 50%; border: 2px solid #fff; background: var(--accent); color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-  .album-picker-cancel { margin-top: 20px; color: var(--text-dim); font-size: 13px; cursor: pointer; }
+  .album-picker-small { position: absolute; bottom: 0; right: 0; width: 44px; height: 44px; border-radius: 50%; border: 2px solid #fff; background: var(--accent); color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+  .album-picker-cancel { margin-top: 32px; color: rgba(255,255,255,0.7); font-size: 13px; cursor: pointer; }
 
   /* 大屏优化 */
   @media (min-width: 768px) {
@@ -411,15 +437,15 @@
   <div class="main">
     <div class="top-bar">
       <div class="top-date-wrap">
-        <span class="top-date" id="topDate"></span>
-        <input type="date" class="date-picker" id="datePicker" onchange="changeDate(this.value)" title="点击选择日期，可补录以前的记录">
+        <div class="date-picker" id="datePicker" onclick="toggleDateCal()">—</div>
+        <div class="date-cal-backdrop" id="dateCalBackdrop" onclick="closeDateCal()"></div>
+        <div class="date-cal" id="dateCal"></div>
       </div>
     </div>
       <div class="sleep-bar" id="sleepBar">
         <div class="sleep-row">
           <div class="sleep-info">
-            <div class="sleep-name">🌙 睡眠时间</div>
-            <div class="sleep-desc" id="sleepDesc">直接输 4 位数字，如 0205 → 0700</div>
+            <div class="sleep-name">🌙 睡眠</div>
           </div>
           <div class="sleep-inputs">
             <input type="text" inputmode="numeric" class="sleep-input" id="sleepTime" value="" placeholder="0205" maxlength="4" oninput="autoFormatTime(this)" onblur="finalizeTime(this)">
@@ -433,15 +459,6 @@
 
       <!-- 打卡 -->
       <div class="page active" id="page-today">
-        <div class="period-reminder" id="periodReminder" style="display:none">
-          <div class="pr-header">
-            <div class="pr-title"><span id="prIcon">🌸</span> <span id="prTitle">经期提醒</span></div>
-            <div class="pr-status" id="prStatus">—</div>
-          </div>
-          <div class="pr-content" id="prContent"></div>
-          <div class="pr-link" onclick="switchPage('period')">查看详情 ›</div>
-        </div>
-
         <div class="card">
           <div class="card-title"><span class="icon">🎯</span> 打卡</div>
           <div class="two-col" id="checkinGrid"></div>
@@ -467,27 +484,14 @@
           <div class="card-title"><span class="icon">🌸</span> 经期状态</div>
           <div class="period-status-box" id="periodStatusBox">
             <div class="ps-icon" id="psIcon">🌸</div>
-            <div class="ps-text" id="psText">点击下方设置</div>
-            <div class="ps-sub" id="psSub">开始记录你的经期周期</div>
+            <div class="ps-text" id="psText">选择日期记录经期</div>
+            <div class="ps-sub" id="psSub">在顶部日历选择日期后设置</div>
           </div>
-          <div class="period-toggle-row">
-            <div class="period-toggle-label"><span class="period-toggle-icon">🩸</span> 月经来了</div>
-            <div class="period-toggle-controls">
-              <div class="toggle-group" id="periodStartToggle">
-                <button class="toggle-btn" data-val="yes" onclick="onPeriodStartToggle('yes')">是</button>
-                <button class="toggle-btn selected" data-val="no" onclick="onPeriodStartToggle('no')">否</button>
-              </div>
-              <input type="date" class="period-date-input" id="periodStartDate" onchange="onPeriodStartDateChange(this.value)">
-            </div>
-          </div>
-          <div class="period-toggle-row">
-            <div class="period-toggle-label"><span class="period-toggle-icon">✓</span> 月经结束</div>
-            <div class="period-toggle-controls">
-              <div class="toggle-group" id="periodEndToggle">
-                <button class="toggle-btn" data-val="yes" onclick="onPeriodEndToggle('yes')">是</button>
-                <button class="toggle-btn selected" data-val="no" onclick="onPeriodEndToggle('no')">否</button>
-              </div>
-              <input type="date" class="period-date-input" id="periodEndDate" onchange="onPeriodEndDateChange(this.value)">
+          <div class="period-toggle-row" id="periodToggleRow">
+            <div class="period-toggle-label"><span class="period-toggle-icon">🩸</span> <span id="periodToggleLabel">月经来了</span></div>
+            <div class="toggle-group" id="periodToggleGroup">
+              <button class="toggle-btn" data-val="yes" onclick="onPeriodToggle('yes')">是</button>
+              <button class="toggle-btn selected" data-val="no" onclick="onPeriodToggle('no')">否</button>
             </div>
           </div>
         </div>
@@ -516,7 +520,7 @@
           <input type="file" id="albumInputCamera" accept="image/*" capture="environment" onchange="handleAlbumUpload(this)" style="display:none">
           <!-- 相册选择输入（无 capture，可选已有照片） -->
           <input type="file" id="albumInputGallery" accept="image/*" onchange="handleAlbumUpload(this)" style="display:none">
-          <div style="font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center">每周拍一张自拍或全身照，记录自己的变化。点 ＋ 直接拍照，点右下角小按钮从相册选。</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center">点 ＋ 打开拍摄界面，可拍照或从相册选择。</div>
         </div>
       </div>
 
@@ -583,6 +587,18 @@
   </div>
 </div>
 
+
+<div class="modal" id="albumPickerModal" onclick="closeAlbumPicker(event)">
+  <div class="modal-close" onclick="closeAlbumPicker(event)">×</div>
+  <div class="album-picker-body" onclick="event.stopPropagation()">
+    <div class="album-picker-title">添加照片</div>
+    <div class="album-picker-main">
+      <button class="album-picker-big" onclick="document.getElementById('albumInputCamera').click(); closeAlbumPickerDirect();">📷<span>拍照</span></button>
+      <button class="album-picker-small" onclick="document.getElementById('albumInputGallery').click(); closeAlbumPickerDirect();" title="从相册选择">🖼</button>
+    </div>
+    <div class="album-picker-cancel" onclick="closeAlbumPickerDirect()">取消</div>
+  </div>
+</div>
 
 <div class="modal" id="albumPickerModal" onclick="closeAlbumPicker(event)">
   <div class="modal-close" onclick="closeAlbumPicker(event)">×</div>
@@ -839,6 +855,9 @@ function removeCheckinTask(idx) {
 function openAlbumPicker() { document.getElementById('albumPickerModal').classList.add('active'); }
 function closeAlbumPicker(e) { if (e.target.id === 'albumPickerModal' || e.target.className === 'modal-close') document.getElementById('albumPickerModal').classList.remove('active'); }
 function closeAlbumPickerDirect() { document.getElementById('albumPickerModal').classList.remove('active'); }
+function openAlbumPicker() { document.getElementById('albumPickerModal').classList.add('active'); }
+function closeAlbumPicker(e) { if (e.target.id === 'albumPickerModal' || e.target.className === 'modal-close') document.getElementById('albumPickerModal').classList.remove('active'); }
+function closeAlbumPickerDirect() { document.getElementById('albumPickerModal').classList.remove('active'); }
 function renderAlbum() {
   const sorted = allData._album.slice().sort((a,b) => b.date.localeCompare(a.date));
   const count = sorted.length;
@@ -945,14 +964,15 @@ function renderDiary() {
   const list = document.getElementById('diaryList');
   if (!list) return;
   list.innerHTML = '';
-  if (day.diary.length === 0) day.diary = [{text:'', done:false}];
-  day.diary.forEach((item, idx) => {
+  const visible = day.diary.filter(item => item && (item.text || '').trim());
+  visible.forEach((item) => {
+    const realIdx = day.diary.indexOf(item);
     const entry = document.createElement('div');
     entry.className = 'diary-entry';
-    entry.innerHTML = '<div class="diary-entry-check' + (item.done ? ' checked' : '') + '" onclick="toggleDiaryDone(' + idx + ')">' + (item.done ? '✓' : '') + '</div><textarea class="diary-entry-input" placeholder="计划/记录...' + (item.done ? ' （已完成）' : '') + '" oninput="updateDiaryEntry(' + idx + ', this.value)"' + (item.done ? ' style="text-decoration:line-through;color:var(--text-dim)"' : '') + '>' + (item.text || '') + '</textarea><button class="diary-entry-del" onclick="removeDiaryEntry(' + idx + ')">✕</button>';
+    entry.innerHTML = '<div class="diary-entry-check' + (item.done ? ' checked' : '') + '" onclick="toggleDiaryDone(' + realIdx + ')">' + (item.done ? '✓' : '') + '</div><textarea class="diary-entry-input" placeholder="计划/记录...' + (item.done ? ' （已完成）' : '') + '" oninput="updateDiaryEntry(' + realIdx + ', this.value)"' + (item.done ? ' style="text-decoration:line-through;color:var(--text-dim)"' : '') + '>' + (item.text || '') + '</textarea><button class="diary-entry-del" onclick="removeDiaryEntry(' + realIdx + ')">✕</button>';
     list.appendChild(entry);
   });
-  document.getElementById('diaryCount').textContent = day.diary.filter(t => t && t.text && t.text.trim()).length + ' 条';
+  document.getElementById('diaryCount').textContent = visible.length + ' 条';
 }
 function addDiaryEntry() {
   const day = getDayData(currentDate);
@@ -966,7 +986,6 @@ function removeDiaryEntry(idx) {
   const day = getDayData(currentDate);
   day.diary = normalizeDiary(day.diary);
   day.diary.splice(idx, 1);
-  if (day.diary.length === 0) day.diary = [{text:'', done:false}];
   saveData(allData);
   renderDiary();
 }
@@ -987,7 +1006,6 @@ function saveDiary() {
   const day = getDayData(currentDate);
   day.diary = normalizeDiary(day.diary);
   day.diary = day.diary.filter(t => t && t.text && t.text.trim());
-  if (day.diary.length === 0) day.diary = [{text:'', done:false}];
   saveData(allData);
   renderDiary(); renderHistory(); renderAnalysis();
   showToast('已保存 ✓');
@@ -997,58 +1015,47 @@ function saveDiary() {
 function getPeriodCovering(dateStr) {
   return allData._periods.find(p => !p.end ? p.start <= dateStr : p.start <= dateStr && p.end >= dateStr);
 }
-function startPeriod() { onPeriodStartToggle('yes'); }
-function endPeriod() { onPeriodEndToggle('yes'); }
-function onPeriodStartToggle(val) {
-  const date = document.getElementById('periodStartDate').value || currentDate;
-  applyPeriodStart(val === 'yes', date);
-}
-function onPeriodStartDateChange(date) {
-  const yes = document.querySelector('#periodStartToggle .toggle-btn[data-val="yes"]').classList.contains('selected');
-  applyPeriodStart(yes, date);
-}
-function onPeriodEndToggle(val) {
-  const date = document.getElementById('periodEndDate').value || currentDate;
-  applyPeriodEnd(val === 'yes', date);
-}
-function onPeriodEndDateChange(date) {
-  const yes = document.querySelector('#periodEndToggle .toggle-btn[data-val="yes"]').classList.contains('selected');
-  applyPeriodEnd(yes, date);
-}
-function applyPeriodStart(enabled, date) {
-  let p = getPeriodCovering(date);
-  if (enabled) {
-    if (p) { p.start = date; }
-    else {
-      const other = allData._periods.find(x => !x.end);
-      if (other) other.end = formatDate(new Date(parseDate(date).getTime() - 86400000));
-      allData._periods.push({start: date, end: null});
+function getOngoingPeriod() { return allData._periods.find(p => !p.end); }
+function onPeriodToggle(val) {
+  const yes = val === 'yes';
+  const p = getPeriodCovering(currentDate);
+  if (!p) {
+    if (yes) {
+      const other = getOngoingPeriod();
+      if (other) other.end = formatDate(new Date(parseDate(currentDate).getTime() - 86400000));
+      allData._periods.push({start: currentDate, end: null});
+      showToast('已记录经期开始 🌸');
     }
-  } else {
-    if (p) {
-      if (p.start === date && !p.end) {
+  } else if (!p.end) {
+    if (p.start === currentDate) {
+      if (yes) { showToast('已开始记录'); }
+      else {
         allData._periods = allData._periods.filter(x => x !== p);
-      } else {
-        p.end = formatDate(new Date(parseDate(date).getTime() - 86400000));
+        showToast('已取消经期开始');
       }
+    } else {
+      if (yes) {
+        p.end = currentDate;
+        showToast('已记录经期结束 ✓');
+      } else { showToast('继续保持记录'); }
+    }
+  } else {
+    if (p.start === currentDate) {
+      if (yes) { showToast('已开始记录'); }
+      else {
+        allData._periods = allData._periods.filter(x => x !== p);
+        showToast('已取消经期开始');
+      }
+    } else if (yes) {
+      p.end = formatDate(new Date(parseDate(currentDate).getTime() - 86400000));
+      allData._periods.push({start: currentDate, end: null});
+      showToast('已记录经期开始 🌸');
     }
   }
   saveData(allData); renderAll();
-  showToast(enabled ? '已记录经期开始 🌸' : '已取消经期开始');
 }
-function applyPeriodEnd(enabled, date) {
-  let p = getPeriodCovering(date);
-  if (enabled) {
-    if (p) { p.end = date; }
-    else { allData._periods.push({start: date, end: date}); }
-  } else {
-    if (p && p.end === date) { p.end = null; }
-  }
-  saveData(allData); renderAll();
-  showToast(enabled ? '已记录经期结束 ✓' : '已取消经期结束');
-}
-function updatePeriodToggle(groupId, isYes) {
-  const group = document.getElementById(groupId);
+function updatePeriodToggle(isYes) {
+  const group = document.getElementById('periodToggleGroup');
   if (!group) return;
   group.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('selected', b.dataset.val === (isYes ? 'yes' : 'no')));
 }
@@ -1159,6 +1166,8 @@ function updateMenuBadge() {
 }
 function renderPeriodReminder() {
   const reminder = document.getElementById('periodReminder');
+  if (reminder) reminder.style.display = 'none';
+  return;
   const isActive = isPeriodActive(getTodayStr());
   const lastStart = getLastPeriodStart();
   const avgCycle = getAvgCycle();
@@ -1379,17 +1388,88 @@ function renderAnalysis() {
 
 function renderTopDate() {
   const d = parseDate(currentDate);
-  const weekMap = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-  document.getElementById('topDate').textContent = (d.getMonth()+1) + '月' + d.getDate() + '日 ' + weekMap[d.getDay()];
+  const weekMap = ['日','一','二','三','四','五','六'];
   const dp = document.getElementById('datePicker');
-  if (dp) dp.value = currentDate;
+  if (dp) dp.textContent = (d.getMonth()+1) + '月' + d.getDate() + '日 周' + weekMap[d.getDay()];
+  renderDateCal();
+}
+let dateCalMonth = null;
+function toggleDateCal() {
+  const cal = document.getElementById('dateCal');
+  const bd = document.getElementById('dateCalBackdrop');
+  if (cal.classList.contains('active')) { closeDateCal(); return; }
+  if (!dateCalMonth) dateCalMonth = parseDate(currentDate);
+  else dateCalMonth = new Date(parseDate(currentDate));
+  renderDateCal();
+  cal.classList.add('active');
+  bd.classList.add('active');
+}
+function closeDateCal() {
+  document.getElementById('dateCal').classList.remove('active');
+  document.getElementById('dateCalBackdrop').classList.remove('active');
+}
+function shiftDateCalMonth(delta) {
+  dateCalMonth.setMonth(dateCalMonth.getMonth() + delta);
+  renderDateCal();
+}
+function renderDateCal() {
+  const el = document.getElementById('dateCal');
+  if (!el) return;
+  if (!dateCalMonth) dateCalMonth = parseDate(currentDate);
+  const y = dateCalMonth.getFullYear();
+  const m = dateCalMonth.getMonth();
+  const startWeek = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const prevDays = new Date(y, m, 0).getDate();
+  const todayStr = getTodayStr();
+  const cfg = allData._config || { cycleDays: 28, periodDays: 5 };
+  const avgCycle = getAvgCycle();
+  const lastStart = getLastPeriodStart();
+  let nextStart = null, ovuDate = null;
+  if (lastStart) {
+    const next = new Date(parseDate(lastStart)); next.setDate(next.getDate() + avgCycle);
+    nextStart = formatDate(next);
+    const ovu = new Date(parseDate(lastStart)); ovu.setDate(ovu.getDate() + avgCycle - 14);
+    ovuDate = formatDate(ovu);
+  }
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  let h = '<div class="dc-header"><div class="dc-nav"><button onclick="shiftDateCalMonth(-1)">‹</button></div><div class="dc-month">' + y + '年' + monthNames[m] + '</div><div class="dc-nav"><button onclick="shiftDateCalMonth(1)">›</button></div></div>';
+  h += '<div class="dc-weekdays"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>';
+  h += '<div class="dc-grid">';
+  for (let i = startWeek - 1; i >= 0; i--) h += '<div class="dc-day other">' + (prevDays - i) + '</div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = formatDate(new Date(y, m, d));
+    const isToday = ds === todayStr;
+    const isSelected = ds === currentDate;
+    const p = getPeriodCovering(ds);
+    const isPeriod = !!p;
+    const isPredict = !isPeriod && nextStart && ds >= nextStart && ds <= formatDate(new Date(parseDate(nextStart).getDate() + cfg.periodDays - 1));
+    const isOvu = !isPeriod && ovuDate === ds;
+    let cls = 'dc-day';
+    if (isToday) cls += ' today';
+    if (isSelected) cls += ' selected';
+    if (isPeriod) cls += ' period';
+    else if (isPredict) cls += ' predict';
+    if (isOvu) cls += ' ovu';
+    h += '<div class="' + cls + '" onclick="selectDateCal(\'' + ds + '\')">' + d + '</div>';
+  }
+  const totalCells = startWeek + daysInMonth;
+  const nextPad = (7 - totalCells % 7) % 7;
+  for (let d = 1; d <= nextPad; d++) h += '<div class="dc-day other">' + d + '</div>';
+  h += '</div>';
+  h += '<div class="dc-legend"><span><i style="background:var(--red)"></i>月经期</span><span><i style="background:rgba(236,72,153,0.35)"></i>预测</span><span><i style="background:var(--purple)"></i>排卵</span></div>';
+  el.innerHTML = h;
+}
+function selectDateCal(dateStr) {
+  currentDate = dateStr;
+  closeDateCal();
+  renderAll();
 }
 function changeDate(val) {
   if (!val) return;
   currentDate = val;
   saveData(allData);
   renderAll();
-  showToast('已切换到 ' + val);
 }
 
 function renderAll() {
