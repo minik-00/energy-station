@@ -104,6 +104,8 @@
   .dc-day.selected { box-shadow: inset 0 0 0 2px var(--accent); }
   .dc-day.future { color: var(--text-dim); opacity: 0.4; cursor: not-allowed; }
   .dc-day.has-data { background: rgba(236,72,153,0.18); }
+  .dc-icons { position: absolute; bottom: 1px; left: 0; right: 0; display: flex; justify-content: center; gap: 0; line-height: 1; }
+  .dc-day-icon { font-size: 7px; }
   .date-cal-backdrop { display: none; }
 
   .content {
@@ -551,19 +553,21 @@ function migrateData() {
 }
 // 默认打卡任务（首次使用时初始化）
 const DEFAULT_CHECKIN_TASKS = [
-  { id: 'face', name: '脸部按摩', desc: '每天2次', target: 2, targetType: 'day', color: '#ec4899' },
-  { id: 'exercise', name: '运动', desc: '简单打卡', target: 1, targetType: 'day', color: '#10b981', simple: true },
-  { id: 'tea', name: '养生茶', desc: '简单打卡', target: 1, targetType: 'day', color: '#f59e0b', simple: true },
+  { id: 'face', name: '脸部按摩', desc: '每天2次', target: 2, targetType: 'day', color: '#ec4899', icon: '💆‍♀️' },
+  { id: 'exercise', name: '运动', desc: '简单打卡', target: 1, targetType: 'day', color: '#10b981', simple: true, icon: '🏃' },
+  { id: 'tea', name: '养生茶', desc: '简单打卡', target: 1, targetType: 'day', color: '#f59e0b', simple: true, icon: '🍵' },
 ];
 const TASK_COLORS = ['#ec4899','#10b981','#f59e0b','#f97316','#3b82f6','#8b5cf6','#ef4444','#06b6d4','#84cc16','#a855f7'];
 // 获取当前打卡任务列表（从数据里读，兼容旧版固定任务）
 function getCheckinTasks() {
   if (!allData._tasks) allData._tasks = DEFAULT_CHECKIN_TASKS.map(t => ({...t}));
-  // 迁移：给已存在的 exercise/tea 任务补上 simple 标记（v9 新增）
+  // 迁移：给已存在的 exercise/tea 任务补上 simple 标记和 icon（v9 新增）
+  const ICON_MAP = { face: '💆‍♀️', exercise: '🏃', tea: '🍵' };
   allData._tasks.forEach(t => {
     if (t.id === 'exercise' || t.id === 'tea') {
       t.simple = true; t.target = 1; t.targetType = 'day'; t.desc = '简单打卡';
     }
+    if (ICON_MAP[t.id] && !t.icon) t.icon = ICON_MAP[t.id];
   });
   return allData._tasks;
 }
@@ -578,7 +582,7 @@ const PERIOD_NOTICES = {
 };
 
 function loadData() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { return {}; } }
-function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function saveData(data) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) { console.warn('保存失败:', e); showToast('存储空间不足，部分数据可能未保存'); } }
 function getTodayStr() { return formatDate(new Date()); }
 function formatDate(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
@@ -879,7 +883,15 @@ function deletePhoto(idx) {
   day.photos.splice(idx, 1);
   saveData(allData);
   renderAlbum();
+  document.getElementById('albumModal').classList.remove('active');
   showToast('已删除');
+}
+// 兼容旧 HTML 的删除按钮（从模态框删除当前查看的照片）
+function deleteCurrentPhoto() {
+  const modal = document.getElementById('albumModal');
+  if (!modal) return;
+  const idx = parseInt(modal.dataset.photoIdx || '0', 10);
+  deletePhoto(idx);
 }
 
 // === 日记（合并计划+记录，每条可勾选完成） ===
@@ -1036,7 +1048,7 @@ function onPeriodToggleClick(val) {
       }
     }
   }
-  saveData(allData); renderAll();
+  saveData(allData); try { renderAll(); } catch(e) { console.error('初始化失败:', e); document.getElementById('checkinGrid').innerHTML = '<div style=\'padding:20px;text-align:center;color:#ef4444\'>加载失败，请刷新页面或清除浏览器缓存<br>错误: ' + e.message + '</div>'; }
 }
 function updatePeriodToggle(isYes) {
   const group = document.getElementById('periodToggleGroup');
@@ -1338,14 +1350,23 @@ function renderDateCal() {
     const isFuture = ds > todayStr;
     const isSelected = ds === currentDate;
     let cls = 'dc-day';
-    if (allData[ds] && (allData[ds].sleep || allData[ds].checkins || (allData[ds].diary && allData[ds].diary.length))) cls += ' has-data';
+    // 收集当天打卡的图标
+    let iconsHtml = '';
+    if (allData[ds] && allData[ds].checkins) {
+      getCheckinTasks().forEach(t => {
+        if (allData[ds].checkins[t.id] > 0 && t.icon) {
+          iconsHtml += '<span class="dc-day-icon" style="color:' + t.color + '">' + t.icon + '</span>';
+        }
+      });
+    }
+    if (allData[ds] && (allData[ds].sleep || allData[ds].wake || iconsHtml || (allData[ds].diary && allData[ds].diary.length) || (allData[ds].photos && allData[ds].photos.length))) cls += ' has-data';
     if (isToday) cls += ' today';
     if (isSelected) cls += ' selected';
     if (isFuture) cls += ' future';
     if (isFuture) {
       h += '<div class="' + cls + '">' + d + '</div>';
     } else {
-      h += '<div class="' + cls + '" onclick="selectDateCal(\'' + ds + '\')">' + d + '</div>';
+      h += '<div class="' + cls + '" onclick="selectDateCal(\'' + ds + '\')">' + d + (iconsHtml ? '<div class="dc-icons">' + iconsHtml + '</div>' : '') + '</div>';
     }
   }
   const totalCells = startWeek + daysInMonth;
@@ -1367,8 +1388,9 @@ function changeDate(val) {
 }
 
 function renderAll() {
-  renderTopDate(); renderSleep(); renderCheckins(); renderDiary();
-  renderAlbum(); renderStats(); renderHeatmap(); renderHistory(); renderAnalysis();
+  // 每个渲染函数独立 try/catch，防止一个出错导致整个页面卡死
+  const fns = [renderTopDate, renderSleep, renderCheckins, renderDiary, renderAlbum, renderStats, renderHeatmap, renderHistory, renderAnalysis];
+  fns.forEach(fn => { try { fn(); } catch(e) { console.warn(fn.name + '渲染失败:', e); } });
 }
 
 function switchPage(name) {
