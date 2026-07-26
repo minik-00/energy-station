@@ -102,11 +102,8 @@
   .dc-day.other { color: var(--text-dim); opacity: 0.4; }
   .dc-day.today { color: var(--green); font-weight: 700; }
   .dc-day.selected { box-shadow: inset 0 0 0 2px var(--accent); }
-  .dc-day.period { background: var(--red); color: #fff; }
-  .dc-day.predict { background: rgba(236,72,153,0.35); }
-  .dc-day.ovu::after { content: ""; position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); }
   .dc-day.future { color: var(--text-dim); opacity: 0.4; cursor: not-allowed; }
-  .dc-day.has-data::before { content: ""; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+  .dc-day.has-data { background: rgba(236,72,153,0.18); }
   .date-cal-backdrop { display: none; }
 
   .content {
@@ -1292,16 +1289,6 @@ function renderDateCal() {
   const daysInMonth = new Date(y, m + 1, 0).getDate();
   const prevDays = new Date(y, m, 0).getDate();
   const todayStr = getTodayStr();
-  const cfg = allData._config || { cycleDays: 28, periodDays: 5 };
-  const avgCycle = getAvgCycle();
-  const lastStart = getLastPeriodStart();
-  let nextStart = null, ovuDate = null;
-  if (lastStart) {
-    const next = new Date(parseDate(lastStart)); next.setDate(next.getDate() + avgCycle);
-    nextStart = formatDate(next);
-    const ovu = new Date(parseDate(lastStart)); ovu.setDate(ovu.getDate() + avgCycle - 14);
-    ovuDate = formatDate(ovu);
-  }
   const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   let h = '<div class="dc-header"><div class="dc-nav"><button onclick="shiftDateCalMonth(-1)">‹</button></div><div class="dc-month">' + y + '年' + monthNames[m] + '</div><div class="dc-nav"><button onclick="shiftDateCalMonth(1)">›</button></div></div>';
   h += '<div class="dc-weekdays"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>';
@@ -1312,18 +1299,11 @@ function renderDateCal() {
     const isToday = ds === todayStr;
     const isFuture = ds > todayStr;
     const isSelected = ds === currentDate;
-    const p = getPeriodCovering(ds);
-    const isPeriod = !!p;
-    const isPredict = !isPeriod && nextStart && ds >= nextStart && ds <= formatDate(new Date(parseDate(nextStart).getDate() + cfg.periodDays - 1));
-    const isOvu = !isPeriod && ovuDate === ds;
     let cls = 'dc-day';
     if (allData[ds] && (allData[ds].sleep || allData[ds].checkins || (allData[ds].diary && allData[ds].diary.length))) cls += ' has-data';
     if (isToday) cls += ' today';
     if (isSelected) cls += ' selected';
     if (isFuture) cls += ' future';
-    if (isPeriod) cls += ' period';
-    else if (isPredict) cls += ' predict';
-    if (isOvu) cls += ' ovu';
     if (isFuture) {
       h += '<div class="' + cls + '">' + d + '</div>';
     } else {
