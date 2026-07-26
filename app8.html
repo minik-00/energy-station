@@ -765,7 +765,9 @@ function handleAlbumUpload(input) {
   const reader = new FileReader();
   reader.onload = function(e) {
     compressImage(e.target.result, 800, function(compressed) {
-      allData._album.push({ date: currentDate, data: compressed });
+      const day = getDayData(currentDate);
+      day.photos = day.photos || [];
+      day.photos.push(compressed);
       saveData(allData);
       renderAlbum();
       showToast('照片已保存 📸');
@@ -786,29 +788,31 @@ function compressImage(dataUrl, maxWidth, callback) {
   };
   img.src = dataUrl;
 }
-function openModal(idx) {
-  const sorted = allData._album.slice().sort((a,b) => b.date.localeCompare(a.date));
-  currentPhotoIndex = idx;
-  document.getElementById('modalImg').src = sorted[idx].data;
-  document.getElementById('modalInfo').textContent = sorted[idx].date + ' · 第 ' + (sorted.length - idx) + ' 张';
-  document.getElementById('albumModal').classList.add('active');
+function openPhotoViewer(idx) {
+  const day = getDayData(currentDate);
+  day.photos = day.photos || [];
+  if (idx < 0 || idx >= day.photos.length) return;
+  const modal = document.getElementById('albumModal');
+  if (!modal) return;
+  document.getElementById('modalImg').src = day.photos[idx];
+  document.getElementById('modalInfo').textContent = currentDate + ' · 第 ' + (idx + 1) + ' 张';
+  modal.classList.add('active');
+  modal.dataset.photoIdx = idx;
 }
 function closeModal(e) {
   if (e.target.id === 'albumModal' || e.target.className === 'modal-close') {
-    document.getElementById('albumModal').classList.remove('active');
-    currentPhotoIndex = -1;
+    const modal = document.getElementById('albumModal');
+    if (modal) { modal.classList.remove('active'); delete modal.dataset.photoIdx; }
   }
 }
-function deleteCurrentPhoto() {
-  if (currentPhotoIndex < 0) return;
+function deletePhoto(idx) {
+  const day = getDayData(currentDate);
+  day.photos = day.photos || [];
+  if (idx < 0 || idx >= day.photos.length) return;
   if (!confirm('确定删除这张照片吗？')) return;
-  const sorted = allData._album.slice().sort((a,b) => b.date.localeCompare(a.date));
-  const photo = sorted[currentPhotoIndex];
-  allData._album = allData._album.filter(p => !(p.date === photo.date && p.data === photo.data));
+  day.photos.splice(idx, 1);
   saveData(allData);
   renderAlbum();
-  document.getElementById('albumModal').classList.remove('active');
-  currentPhotoIndex = -1;
   showToast('已删除');
 }
 
@@ -1315,9 +1319,11 @@ function switchPage(name) {
   document.getElementById('page-' + name).classList.add('active');
   document.querySelectorAll('.menu-item').forEach(n => n.classList.toggle('active', n.dataset.page === name));
   document.querySelector('.content').scrollTop = 0;
+  if (name === 'today') { renderSleep(); renderCheckins(); renderDiary(); renderAlbum(); }
   if (name === 'analysis') renderAnalysis();
   if (name === 'album') renderAlbum();
   if (name === 'diary') renderDiary();
+  if (name === 'stats') renderHistory();
 }
 
 // 事件绑定
