@@ -369,6 +369,9 @@
   .toggle-group { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
   .toggle-btn { padding: 7px 18px; border: none; background: var(--card); color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
   .toggle-btn.selected { background: var(--accent); color: #fff; }
+  .period-single-btn { padding: 8px 22px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--card); color: var(--text-dim); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; min-width: 56px; }
+  .period-single-btn.yes { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .period-single-btn:active { transform: scale(0.95); }
 
   /* 相册选择器 */
   #albumPickerModal { background: rgba(0,0,0,0.92); }
@@ -488,11 +491,8 @@
             <div class="ps-sub" id="psSub">在顶部日历选择日期后设置</div>
           </div>
           <div class="period-toggle-row" id="periodToggleRow">
-            <div class="period-toggle-label"><span class="period-toggle-icon">🩸</span> <span id="periodToggleLabel">月经来了</span></div>
-            <div class="toggle-group" id="periodToggleGroup">
-              <button class="toggle-btn" data-val="yes" onclick="onPeriodToggle('yes')">是</button>
-              <button class="toggle-btn selected" data-val="no" onclick="onPeriodToggle('no')">否</button>
-            </div>
+            <div class="period-toggle-label"><span class="period-toggle-icon">🩸</span> <span id="periodToggleLabel">月经来咯</span></div>
+            <button class="period-single-btn" id="periodSingleBtn" onclick="onPeriodSingleToggle()">否</button>
           </div>
         </div>
         <div class="card">
@@ -520,7 +520,7 @@
           <input type="file" id="albumInputCamera" accept="image/*" capture="environment" onchange="handleAlbumUpload(this)" style="display:none">
           <!-- 相册选择输入（无 capture，可选已有照片） -->
           <input type="file" id="albumInputGallery" accept="image/*" onchange="handleAlbumUpload(this)" style="display:none">
-          <div style="font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center">点 ＋ 打开拍摄界面，可拍照或从相册选择。</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center">点 ＋ 直接拍照记录变化。</div>
         </div>
       </div>
 
@@ -588,29 +588,6 @@
 </div>
 
 
-<div class="modal" id="albumPickerModal" onclick="closeAlbumPicker(event)">
-  <div class="modal-close" onclick="closeAlbumPicker(event)">×</div>
-  <div class="album-picker-body" onclick="event.stopPropagation()">
-    <div class="album-picker-title">添加照片</div>
-    <div class="album-picker-main">
-      <button class="album-picker-big" onclick="document.getElementById('albumInputCamera').click(); closeAlbumPickerDirect();">📷<span>拍照</span></button>
-      <button class="album-picker-small" onclick="document.getElementById('albumInputGallery').click(); closeAlbumPickerDirect();" title="从相册选择">🖼</button>
-    </div>
-    <div class="album-picker-cancel" onclick="closeAlbumPickerDirect()">取消</div>
-  </div>
-</div>
-
-<div class="modal" id="albumPickerModal" onclick="closeAlbumPicker(event)">
-  <div class="modal-close" onclick="closeAlbumPicker(event)">×</div>
-  <div class="album-picker-body" onclick="event.stopPropagation()">
-    <div class="album-picker-title">添加照片</div>
-    <div class="album-picker-main">
-      <button class="album-picker-big" onclick="document.getElementById('albumInputCamera').click(); closeAlbumPickerDirect();">📷<span>拍照</span></button>
-      <button class="album-picker-small" onclick="document.getElementById('albumInputGallery').click(); closeAlbumPickerDirect();" title="从相册选择">🖼</button>
-    </div>
-    <div class="album-picker-cancel" onclick="closeAlbumPickerDirect()">取消</div>
-  </div>
-</div>
 <div class="modal" id="albumModal" onclick="closeModal(event)">
   <div class="modal-close" onclick="closeModal(event)">×</div>
   <img id="modalImg" src="" alt="">
@@ -852,12 +829,6 @@ function removeCheckinTask(idx) {
 }
 
 // === 相册 ===
-function openAlbumPicker() { document.getElementById('albumPickerModal').classList.add('active'); }
-function closeAlbumPicker(e) { if (e.target.id === 'albumPickerModal' || e.target.className === 'modal-close') document.getElementById('albumPickerModal').classList.remove('active'); }
-function closeAlbumPickerDirect() { document.getElementById('albumPickerModal').classList.remove('active'); }
-function openAlbumPicker() { document.getElementById('albumPickerModal').classList.add('active'); }
-function closeAlbumPicker(e) { if (e.target.id === 'albumPickerModal' || e.target.className === 'modal-close') document.getElementById('albumPickerModal').classList.remove('active'); }
-function closeAlbumPickerDirect() { document.getElementById('albumPickerModal').classList.remove('active'); }
 function renderAlbum() {
   const sorted = allData._album.slice().sort((a,b) => b.date.localeCompare(a.date));
   const count = sorted.length;
@@ -866,7 +837,7 @@ function renderAlbum() {
   const grid = document.getElementById('albumGrid2');
   if (!grid) return;
   // 加号按钮：点 ＋ 直接拍照；右下角小按钮：从相册选
-  const addBtn = '<div class="album-item album-add" onclick="openAlbumPicker()"><span>＋</span><span>拍照</span></div>';
+  const addBtn = '<div class="album-item album-add" onclick="document.getElementById(\'albumInputCamera\').click()"><span>＋</span><span>拍照</span></div>';
   if (sorted.length === 0) { grid.innerHTML = addBtn; return; }
   let html = addBtn;
   sorted.forEach((photo, idx) => { html += '<div class="album-item" onclick="openModal(' + idx + ')"><img src="' + photo.data + '" alt=""><div class="album-date">' + photo.date + '</div></div>'; });
@@ -1016,37 +987,31 @@ function getPeriodCovering(dateStr) {
   return allData._periods.find(p => !p.end ? p.start <= dateStr : p.start <= dateStr && p.end >= dateStr);
 }
 function getOngoingPeriod() { return allData._periods.find(p => !p.end); }
-function onPeriodToggle(val) {
-  const yes = val === 'yes';
+function onPeriodSingleToggle() {
   const p = getPeriodCovering(currentDate);
   if (!p) {
-    if (yes) {
-      const other = getOngoingPeriod();
-      if (other) other.end = formatDate(new Date(parseDate(currentDate).getTime() - 86400000));
-      allData._periods.push({start: currentDate, end: null});
-      showToast('已记录经期开始 🌸');
-    }
+    // 没有经期记录：点击 = 开始来月经
+    const other = getOngoingPeriod();
+    if (other) other.end = formatDate(new Date(parseDate(currentDate).getTime() - 86400000));
+    allData._periods.push({start: currentDate, end: null});
+    showToast('已记录经期开始 🌸');
   } else if (!p.end) {
+    // 经期进行中
     if (p.start === currentDate) {
-      if (yes) { showToast('已开始记录'); }
-      else {
-        allData._periods = allData._periods.filter(x => x !== p);
-        showToast('已取消经期开始');
-      }
+      // 当天开始：点击 = 取消开始
+      allData._periods = allData._periods.filter(x => x !== p);
+      showToast('已取消经期开始');
     } else {
-      if (yes) {
-        p.end = currentDate;
-        showToast('已记录经期结束 ✓');
-      } else { showToast('继续保持记录'); }
+      // 后续天：点击 = 结束经期
+      p.end = currentDate;
+      showToast('已记录经期结束 ✓');
     }
   } else {
+    // 已结束经期
     if (p.start === currentDate) {
-      if (yes) { showToast('已开始记录'); }
-      else {
-        allData._periods = allData._periods.filter(x => x !== p);
-        showToast('已取消经期开始');
-      }
-    } else if (yes) {
+      allData._periods = allData._periods.filter(x => x !== p);
+      showToast('已取消经期开始');
+    } else {
       p.end = formatDate(new Date(parseDate(currentDate).getTime() - 86400000));
       allData._periods.push({start: currentDate, end: null});
       showToast('已记录经期开始 🌸');
@@ -1055,9 +1020,10 @@ function onPeriodToggle(val) {
   saveData(allData); renderAll();
 }
 function updatePeriodToggle(isYes) {
-  const group = document.getElementById('periodToggleGroup');
-  if (!group) return;
-  group.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('selected', b.dataset.val === (isYes ? 'yes' : 'no')));
+  const btn = document.getElementById('periodSingleBtn');
+  if (!btn) return;
+  btn.classList.toggle('yes', isYes);
+  btn.textContent = isYes ? '是' : '否';
 }
 function updateCycleDays(val) { allData._config.cycleDays = parseInt(val) || 28; saveData(allData); renderPeriod(); renderAnalysis(); }
 function updatePeriodDays(val) { allData._config.periodDays = parseInt(val) || 5; saveData(allData); renderPeriod(); }
