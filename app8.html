@@ -683,8 +683,32 @@ function adjustCheckin(taskId, delta) {
   if (currentDate > getTodayStr()) { showToast('未来的日子还没到哦 ✨'); return; }
   const current = getCheckinData(currentDate, taskId);
   setCheckinData(currentDate, taskId, current + delta);
-  renderCheckins(); renderTopDate(); renderHeatmap(); renderHistory(); renderAnalysis();
+  // 只更新受影响卡片的数字和进度条，避免重建整个 DOM 导致进度条无动画
+  updateCheckinCard(taskId);
+  renderTopDate(); renderHeatmap(); renderHistory(); renderAnalysis();
   if (delta > 0) showToast('打卡 +1 ✓');
+}
+function updateCheckinCard(taskId) {
+  const cards = document.querySelectorAll('.checkin-card');
+  const t = getCheckinTasks().find(x => x.id === taskId);
+  if (!t) return;
+  const card = [].find.call(cards, function(c){ return c.querySelector('.checkin-name').textContent === t.name; });
+  if (!card) return;
+  const todayCount = getCheckinData(currentDate, t.id);
+  const isDay = !t.targetType || t.targetType === 'day';
+  const progressCount = isDay ? todayCount : getWeekCheckinCount(t.id);
+  const pct = Math.min(100, Math.round(progressCount / t.target * 100));
+  const isDone = progressCount >= t.target;
+  card.querySelector('.checkin-count').textContent = todayCount;
+  const fill = card.querySelector('.checkin-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+  const labelEl = card.querySelector('.checkin-target');
+  if (labelEl) {
+    labelEl.textContent = (isDay ? '今日 ' + todayCount + '/' + t.target : '本周 ' + progressCount + '/' + t.target) + (isDone ? ' ✓' : '');
+    labelEl.classList.toggle('done', isDone);
+  }
+  const totalEl = card.querySelector('.checkin-footer span:last-child');
+  if (totalEl) totalEl.textContent = '累计 ' + getTotalCheckinCount(t.id) + ' 次';
 }
 
 // === 打卡任务增删改 ===
