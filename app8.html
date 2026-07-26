@@ -328,6 +328,32 @@
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--accent); color: white; padding: 12px 24px; border-radius: 24px; font-size: 14px; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 100; box-shadow: 0 4px 16px rgba(236,72,153,0.35); }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+
+  /* 顶部睡眠条 */
+  .sleep-bar { background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 16px; flex-shrink: 0; }
+  .sleep-bar .sleep-row { display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; border-radius: 0; padding: 0; margin-bottom: 0; }
+  .sleep-bar .sleep-info { display: flex; flex-direction: column; gap: 2px; }
+  .sleep-bar .sleep-result { font-size: 11px; color: var(--blue); margin-top: 6px; text-align: right; }
+
+  /* 经期开关 */
+  .period-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg); border-radius: 14px; margin-bottom: 10px; border: 1px solid var(--border); }
+  .period-toggle-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+  .period-toggle-icon { font-size: 18px; }
+  .period-toggle-controls { display: flex; align-items: center; gap: 10px; }
+  .toggle-group { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .toggle-btn { padding: 7px 16px; border: none; background: var(--card); color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .toggle-btn.selected { background: var(--accent); color: #fff; }
+  .period-date-input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 10px; font-size: 13px; width: 110px; }
+
+  /* 相册选择器 */
+  .album-picker-body { background: var(--card); border-radius: 20px; padding: 24px; width: 90%; max-width: 320px; text-align: center; }
+  .album-picker-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+  .album-picker-main { position: relative; display: inline-block; }
+  .album-picker-big { width: 120px; height: 120px; border-radius: 50%; border: 2px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-size: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 14px rgba(236,72,153,0.25); }
+  .album-picker-big span { font-size: 13px; font-weight: 600; margin-top: 4px; }
+  .album-picker-small { position: absolute; bottom: 0; right: 0; width: 44px; height: 44px; border-radius: 50%; border: 2px solid #fff; background: var(--accent); color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .album-picker-cancel { margin-top: 20px; color: var(--text-dim); font-size: 13px; cursor: pointer; }
+
   /* 大屏优化 */
   @media (min-width: 768px) {
     .sidebar { width: var(--sidebar-w); padding: 20px 12px; }
@@ -389,6 +415,20 @@
         <input type="date" class="date-picker" id="datePicker" onchange="changeDate(this.value)" title="点击选择日期，可补录以前的记录">
       </div>
     </div>
+      <div class="sleep-bar" id="sleepBar">
+        <div class="sleep-row">
+          <div class="sleep-info">
+            <div class="sleep-name">🌙 睡眠时间</div>
+            <div class="sleep-desc" id="sleepDesc">直接输 4 位数字，如 0205 → 0700</div>
+          </div>
+          <div class="sleep-inputs">
+            <input type="text" inputmode="numeric" class="sleep-input" id="sleepTime" value="" placeholder="0205" maxlength="4" oninput="autoFormatTime(this)" onblur="finalizeTime(this)">
+            <span class="sleep-arrow">→</span>
+            <input type="text" inputmode="numeric" class="sleep-input" id="wakeTime" value="" placeholder="0700" maxlength="4" oninput="autoFormatTime(this)" onblur="finalizeTime(this)">
+          </div>
+        </div>
+        <div class="sleep-result" id="sleepResult"></div>
+      </div>
     <div class="content">
 
       <!-- 打卡 -->
@@ -400,19 +440,6 @@
           </div>
           <div class="pr-content" id="prContent"></div>
           <div class="pr-link" onclick="switchPage('period')">查看详情 ›</div>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><span class="icon">🌙</span> 睡眠时间</div>
-          <div class="sleep-row">
-            <div class="sleep-inputs">
-              <input type="text" inputmode="numeric" class="sleep-input" id="sleepTime" value="" placeholder="0205" maxlength="4" oninput="autoFormatTime(this)" onblur="finalizeTime(this)">
-              <span class="sleep-arrow">→</span>
-              <input type="text" inputmode="numeric" class="sleep-input" id="wakeTime" value="" placeholder="0700" maxlength="4" oninput="autoFormatTime(this)" onblur="finalizeTime(this)">
-              <span class="sleep-result" id="sleepResult" style="margin-top:0;margin-left:8px"></span>
-            </div>
-          </div>
-          <div style="font-size:11px;color:var(--text-dim);margin-top:6px;line-height:1.5">直接输 4 位数字，如凌晨 2:05 输 <b style="color:var(--accent)">0205</b>，早 7:00 输 <b style="color:var(--accent)">0700</b>，晚上 23:30 输 <b style="color:var(--accent)">2330</b>。</div>
         </div>
 
         <div class="card">
@@ -440,12 +467,28 @@
           <div class="card-title"><span class="icon">🌸</span> 经期状态</div>
           <div class="period-status-box" id="periodStatusBox">
             <div class="ps-icon" id="psIcon">🌸</div>
-            <div class="ps-text" id="psText">点击下方按钮记录</div>
+            <div class="ps-text" id="psText">点击下方设置</div>
             <div class="ps-sub" id="psSub">开始记录你的经期周期</div>
           </div>
-          <div class="period-action-row">
-            <button class="period-action-btn start" id="periodStartBtn" onclick="startPeriod()">来月经了</button>
-            <button class="period-action-btn end" id="periodEndBtn" onclick="endPeriod()" disabled>月经结束</button>
+          <div class="period-toggle-row">
+            <div class="period-toggle-label"><span class="period-toggle-icon">🩸</span> 月经来了</div>
+            <div class="period-toggle-controls">
+              <div class="toggle-group" id="periodStartToggle">
+                <button class="toggle-btn" data-val="yes" onclick="onPeriodStartToggle('yes')">是</button>
+                <button class="toggle-btn selected" data-val="no" onclick="onPeriodStartToggle('no')">否</button>
+              </div>
+              <input type="date" class="period-date-input" id="periodStartDate" onchange="onPeriodStartDateChange(this.value)">
+            </div>
+          </div>
+          <div class="period-toggle-row">
+            <div class="period-toggle-label"><span class="period-toggle-icon">✓</span> 月经结束</div>
+            <div class="period-toggle-controls">
+              <div class="toggle-group" id="periodEndToggle">
+                <button class="toggle-btn" data-val="yes" onclick="onPeriodEndToggle('yes')">是</button>
+                <button class="toggle-btn selected" data-val="no" onclick="onPeriodEndToggle('no')">否</button>
+              </div>
+              <input type="date" class="period-date-input" id="periodEndDate" onchange="onPeriodEndDateChange(this.value)">
+            </div>
           </div>
         </div>
         <div class="card">
@@ -540,6 +583,18 @@
   </div>
 </div>
 
+
+<div class="modal" id="albumPickerModal" onclick="closeAlbumPicker(event)">
+  <div class="modal-close" onclick="closeAlbumPicker(event)">×</div>
+  <div class="album-picker-body" onclick="event.stopPropagation()">
+    <div class="album-picker-title">添加照片</div>
+    <div class="album-picker-main">
+      <button class="album-picker-big" onclick="document.getElementById('albumInputCamera').click(); closeAlbumPickerDirect();">📷<span>拍照</span></button>
+      <button class="album-picker-small" onclick="document.getElementById('albumInputGallery').click(); closeAlbumPickerDirect();" title="从相册选择">🖼</button>
+    </div>
+    <div class="album-picker-cancel" onclick="closeAlbumPickerDirect()">取消</div>
+  </div>
+</div>
 <div class="modal" id="albumModal" onclick="closeModal(event)">
   <div class="modal-close" onclick="closeModal(event)">×</div>
   <img id="modalImg" src="" alt="">
@@ -781,6 +836,9 @@ function removeCheckinTask(idx) {
 }
 
 // === 相册 ===
+function openAlbumPicker() { document.getElementById('albumPickerModal').classList.add('active'); }
+function closeAlbumPicker(e) { if (e.target.id === 'albumPickerModal' || e.target.className === 'modal-close') document.getElementById('albumPickerModal').classList.remove('active'); }
+function closeAlbumPickerDirect() { document.getElementById('albumPickerModal').classList.remove('active'); }
 function renderAlbum() {
   const sorted = allData._album.slice().sort((a,b) => b.date.localeCompare(a.date));
   const count = sorted.length;
@@ -789,7 +847,7 @@ function renderAlbum() {
   const grid = document.getElementById('albumGrid2');
   if (!grid) return;
   // 加号按钮：点 ＋ 直接拍照；右下角小按钮：从相册选
-  const addBtn = '<div class="album-item album-add" onclick="document.getElementById(\'albumInputCamera\').click()"><span>＋</span><span>拍照</span><div class="album-gallery-btn" onclick="event.stopPropagation(); document.getElementById(\'albumInputGallery\').click()" title="从相册选择">🖼</div></div>';
+  const addBtn = '<div class="album-item album-add" onclick="openAlbumPicker()"><span>＋</span><span>拍照</span></div>';
   if (sorted.length === 0) { grid.innerHTML = addBtn; return; }
   let html = addBtn;
   sorted.forEach((photo, idx) => { html += '<div class="album-item" onclick="openModal(' + idx + ')"><img src="' + photo.data + '" alt=""><div class="album-date">' + photo.date + '</div></div>'; });
@@ -854,7 +912,34 @@ function normalizeDiary(arr) {
   if (!arr) return [{text:'', done:false}];
   return arr.map(item => typeof item === 'string' ? {text:item, done:false} : {text:item.text||'', done:!!item.done});
 }
+function carryOverDiary(dateStr) {
+  const day = getDayData(dateStr);
+  day.diary = normalizeDiary(day.diary);
+  const existing = new Set(day.diary.filter(x => x.text).map(x => x.text.trim()));
+  let added = false;
+  let d = parseDate(dateStr);
+  for (let i = 1; i <= 30; i++) {
+    d.setDate(d.getDate() - 1);
+    const ds = formatDate(d);
+    if (allData[ds] && allData[ds].diary) {
+      const pending = normalizeDiary(allData[ds].diary).filter(x => x.text && x.text.trim() && !x.done);
+      if (pending.length > 0) {
+        pending.forEach(p => {
+          const txt = p.text.trim();
+          if (!existing.has(txt)) {
+            day.diary.push({text: p.text, done: false});
+            existing.add(txt);
+            added = true;
+          }
+        });
+        break;
+      }
+    }
+  }
+  if (added) saveData(allData);
+}
 function renderDiary() {
+  carryOverDiary(currentDate);
   const day = getDayData(currentDate);
   day.diary = normalizeDiary(day.diary);
   const list = document.getElementById('diaryList');
@@ -909,16 +994,63 @@ function saveDiary() {
 }
 
 // === 经期 ===
-function startPeriod() {
-  const ongoing = allData._periods.find(p => !p.end);
-  if (ongoing) ongoing.end = currentDate;
-  allData._periods.push({ start: currentDate, end: null });
-  saveData(allData); renderAll();
-  showToast('已记录经期开始 🌸', 'pink');
+function getPeriodCovering(dateStr) {
+  return allData._periods.find(p => !p.end ? p.start <= dateStr : p.start <= dateStr && p.end >= dateStr);
 }
-function endPeriod() {
-  const ongoing = allData._periods.find(p => !p.end);
-  if (ongoing) { ongoing.end = currentDate; saveData(allData); renderAll(); showToast('已记录经期结束 ✓'); }
+function startPeriod() { onPeriodStartToggle('yes'); }
+function endPeriod() { onPeriodEndToggle('yes'); }
+function onPeriodStartToggle(val) {
+  const date = document.getElementById('periodStartDate').value || currentDate;
+  applyPeriodStart(val === 'yes', date);
+}
+function onPeriodStartDateChange(date) {
+  const yes = document.querySelector('#periodStartToggle .toggle-btn[data-val="yes"]').classList.contains('selected');
+  applyPeriodStart(yes, date);
+}
+function onPeriodEndToggle(val) {
+  const date = document.getElementById('periodEndDate').value || currentDate;
+  applyPeriodEnd(val === 'yes', date);
+}
+function onPeriodEndDateChange(date) {
+  const yes = document.querySelector('#periodEndToggle .toggle-btn[data-val="yes"]').classList.contains('selected');
+  applyPeriodEnd(yes, date);
+}
+function applyPeriodStart(enabled, date) {
+  let p = getPeriodCovering(date);
+  if (enabled) {
+    if (p) { p.start = date; }
+    else {
+      const other = allData._periods.find(x => !x.end);
+      if (other) other.end = formatDate(new Date(parseDate(date).getTime() - 86400000));
+      allData._periods.push({start: date, end: null});
+    }
+  } else {
+    if (p) {
+      if (p.start === date && !p.end) {
+        allData._periods = allData._periods.filter(x => x !== p);
+      } else {
+        p.end = formatDate(new Date(parseDate(date).getTime() - 86400000));
+      }
+    }
+  }
+  saveData(allData); renderAll();
+  showToast(enabled ? '已记录经期开始 🌸' : '已取消经期开始');
+}
+function applyPeriodEnd(enabled, date) {
+  let p = getPeriodCovering(date);
+  if (enabled) {
+    if (p) { p.end = date; }
+    else { allData._periods.push({start: date, end: date}); }
+  } else {
+    if (p && p.end === date) { p.end = null; }
+  }
+  saveData(allData); renderAll();
+  showToast(enabled ? '已记录经期结束 ✓' : '已取消经期结束');
+}
+function updatePeriodToggle(groupId, isYes) {
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  group.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('selected', b.dataset.val === (isYes ? 'yes' : 'no')));
 }
 function updateCycleDays(val) { allData._config.cycleDays = parseInt(val) || 28; saveData(allData); renderPeriod(); renderAnalysis(); }
 function updatePeriodDays(val) { allData._config.periodDays = parseInt(val) || 5; saveData(allData); renderPeriod(); }
@@ -937,8 +1069,6 @@ function renderPeriod() {
   const lastStart = getLastPeriodStart();
   const avgCycle = getAvgCycle();
   const todayStr = getTodayStr();
-  const startBtn = document.getElementById('periodStartBtn');
-  const endBtn = document.getElementById('periodEndBtn');
 
   if (isActive) {
     box.className = 'period-status-box active';
@@ -946,7 +1076,6 @@ function renderPeriod() {
     document.getElementById('psText').textContent = '经期进行中';
     const ongoing = allData._periods.find(p => !p.end);
     document.getElementById('psSub').textContent = '第 ' + (daysBetween(ongoing.start, currentDate) + 1) + ' 天 · 注意保暖休息';
-    startBtn.disabled = true; endBtn.disabled = false;
   } else if (lastStart) {
     const nextDate = new Date(parseDate(lastStart)); nextDate.setDate(nextDate.getDate() + avgCycle);
     const nextStr = formatDate(nextDate);
@@ -960,21 +1089,25 @@ function renderPeriod() {
       box.className = 'period-status-box alert';
       document.getElementById('psIcon').textContent = '⏰';
       document.getElementById('psText').textContent = '经期可能已开始';
-      document.getElementById('psSub').textContent = '预计经期已到 · 如来了请点击下方按钮';
+      document.getElementById('psSub').textContent = '预计经期已到 · 如来了请设置下方开关';
     } else {
       box.className = 'period-status-box';
       document.getElementById('psIcon').textContent = '🌸';
       document.getElementById('psText').textContent = '经期周期中';
       document.getElementById('psSub').textContent = '距下次约 ' + daysLeft + ' 天 · 预计 ' + nextStr;
     }
-    startBtn.disabled = false; endBtn.disabled = true;
   } else {
     box.className = 'period-status-box';
     document.getElementById('psIcon').textContent = '🌸';
-    document.getElementById('psText').textContent = '点击下方按钮记录';
+    document.getElementById('psText').textContent = '点击下方设置';
     document.getElementById('psSub').textContent = '开始记录你的经期周期';
-    startBtn.disabled = false; endBtn.disabled = true;
   }
+
+  const p = getPeriodCovering(currentDate);
+  updatePeriodToggle('periodStartToggle', !!p);
+  updatePeriodToggle('periodEndToggle', !!(p && p.end && p.end <= currentDate));
+  const psd = document.getElementById('periodStartDate'); if (psd) psd.value = p ? p.start : currentDate;
+  const ped = document.getElementById('periodEndDate'); if (ped) ped.value = (p && p.end) ? p.end : currentDate;
 
   const noticeCard = document.getElementById('periodNoticeCard');
   if (isActive) {
@@ -1247,7 +1380,7 @@ function renderAnalysis() {
 function renderTopDate() {
   const d = parseDate(currentDate);
   const weekMap = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-  document.getElementById('topDate').textContent = d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日 ' + weekMap[d.getDay()];
+  document.getElementById('topDate').textContent = (d.getMonth()+1) + '月' + d.getDate() + '日 ' + weekMap[d.getDay()];
   const dp = document.getElementById('datePicker');
   if (dp) dp.value = currentDate;
 }
