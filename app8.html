@@ -481,7 +481,10 @@
           </div>
           <div class="period-toggle-row" id="periodToggleRow">
             <div class="period-toggle-label"><span class="period-toggle-icon">🩸</span> <span id="periodToggleLabel">月经来咯</span></div>
-            <button class="period-single-btn" id="periodSingleBtn" onclick="onPeriodSingleToggle()">否</button>
+            <div class="toggle-group" id="periodToggleGroup">
+              <button class="toggle-btn" data-val="yes" onclick="onPeriodToggleClick('yes')">是</button>
+              <button class="toggle-btn selected" data-val="no" onclick="onPeriodToggleClick('no')">否</button>
+            </div>
           </div>
         </div>
         <div class="card">
@@ -924,7 +927,7 @@ function renderDiary() {
   const list = document.getElementById('diaryList');
   if (!list) return;
   list.innerHTML = '';
-  const visible = day.diary.filter(item => item && (item.text || '').trim());
+  const visible = day.diary.filter(item => item);
   visible.forEach((item) => {
     const realIdx = day.diary.indexOf(item);
     const entry = document.createElement('div');
@@ -973,50 +976,63 @@ function saveDiary() {
 
 // === 经期 ===
 function getPeriodCovering(dateStr) {
-  return allData._periods.find(p => !p.end ? p.start <= dateStr : p.start <= dateStr && p.end >= dateStr);
+  const todayStr = getTodayStr();
+  return allData._periods.find(p => !p.end ? (p.start <= dateStr && dateStr <= todayStr) : (p.start <= dateStr && p.end >= dateStr));
 }
 function getOngoingPeriod() { return allData._periods.find(p => !p.end); }
-function onPeriodSingleToggle() {
+function onPeriodToggleClick(val) {
+  const yes = val === 'yes';
   const p = getPeriodCovering(currentDate);
   if (!p) {
-    // 没有经期记录：点击 = 开始来月经
-    const other = getOngoingPeriod();
-    if (other) other.end = formatDate(new Date(parseDate(currentDate).getTime() - 86400000));
-    allData._periods.push({start: currentDate, end: null});
-    showToast('已记录经期开始 🌸');
+    // 没有经期记录：点"是" = 开始来月经
+    if (yes) {
+      const other = getOngoingPeriod();
+      if (other) other.end = formatDate(new Date(parseDate(currentDate).getTime() - 86400000));
+      allData._periods.push({start: currentDate, end: null});
+      showToast('已记录经期开始 🌸');
+    }
   } else if (!p.end) {
     // 经期进行中
     if (p.start === currentDate) {
-      // 当天开始：点击 = 取消开始
-      allData._periods = allData._periods.filter(x => x !== p);
-      showToast('已取消经期开始');
+      // 当天开始
+      if (yes) { showToast('已开始记录'); }
+      else {
+        allData._periods = allData._periods.filter(x => x !== p);
+        showToast('已取消经期开始');
+      }
     } else {
-      // 后续天：点击 = 结束经期
-      p.end = currentDate;
-      showToast('已记录经期结束 ✓');
+      // 后续天
+      if (yes) {
+        p.end = currentDate;
+        showToast('已记录经期结束 ✓');
+      } else { showToast('经期进行中'); }
     }
   } else {
     // 已结束经期
     if (p.start === currentDate) {
-      allData._periods = allData._periods.filter(x => x !== p);
-      showToast('已取消经期开始');
+      if (yes) { showToast('已开始记录'); }
+      else {
+        allData._periods = allData._periods.filter(x => x !== p);
+        showToast('已取消经期开始');
+      }
     } else {
-      p.end = formatDate(new Date(parseDate(currentDate).getTime() - 86400000));
-      allData._periods.push({start: currentDate, end: null});
-      showToast('已记录经期开始 🌸');
+      if (yes) {
+        p.end = formatDate(new Date(parseDate(currentDate).getTime() - 86400000));
+        allData._periods.push({start: currentDate, end: null});
+        showToast('已记录经期开始 🌸');
+      }
     }
   }
   saveData(allData); renderAll();
 }
 function updatePeriodToggle(isYes) {
-  const btn = document.getElementById('periodSingleBtn');
-  if (!btn) return;
-  btn.classList.toggle('yes', isYes);
-  btn.textContent = isYes ? '是' : '否';
+  const group = document.getElementById('periodToggleGroup');
+  if (!group) return;
+  group.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('selected', b.dataset.val === (isYes ? 'yes' : 'no')));
 }
 function updateCycleDays(val) { allData._config.cycleDays = parseInt(val) || 28; saveData(allData); renderPeriod(); renderAnalysis(); }
 function updatePeriodDays(val) { allData._config.periodDays = parseInt(val) || 5; saveData(allData); renderPeriod(); }
-function isPeriodActive(dateStr) { return allData._periods.some(p => !p.end ? p.start <= dateStr : p.start <= dateStr && p.end >= dateStr); }
+function isPeriodActive(dateStr) { const todayStr = getTodayStr(); return allData._periods.some(p => !p.end ? (p.start <= dateStr && dateStr <= todayStr) : (p.start <= dateStr && p.end >= dateStr)); }
 function getLastPeriodStart() { const s = allData._periods.slice().sort((a,b) => b.start.localeCompare(a.start)); return s.length > 0 ? s[0].start : null; }
 function getAvgCycle() {
   const c = allData._periods.filter(p => p.end).sort((a,b) => a.start.localeCompare(b.start));
@@ -1031,6 +1047,21 @@ function renderPeriod() {
   const lastStart = getLastPeriodStart();
   const avgCycle = getAvgCycle();
   const todayStr = getTodayStr();
+
+  // 设置按钮标签和是/否状态
+  const p = getPeriodCovering(currentDate);
+  let label = '月经来咯', isYes = false;
+  if (!p) { label = '月经来咯'; isYes = false; }
+  else if (!p.end) {
+    if (p.start === currentDate) { label = '月经来咯'; isYes = true; }
+    else { label = '月经走咯'; isYes = false; }
+  } else {
+    if (p.start === currentDate) { label = '月经来咯'; isYes = true; }
+    else { label = '月经来咯'; isYes = false; }
+  }
+  const labEl = document.getElementById('periodToggleLabel');
+  if (labEl) labEl.textContent = label;
+  updatePeriodToggle(isYes);
 
   if (isActive) {
     box.className = 'period-status-box active';
@@ -1061,8 +1092,8 @@ function renderPeriod() {
   } else {
     box.className = 'period-status-box';
     document.getElementById('psIcon').textContent = '🌸';
-    document.getElementById('psText').textContent = '点击下方设置';
-    document.getElementById('psSub').textContent = '开始记录你的经期周期';
+    document.getElementById('psText').textContent = ' ';
+    document.getElementById('psSub').textContent = ' ';
   }
 
   const noticeCard = document.getElementById('periodNoticeCard');
