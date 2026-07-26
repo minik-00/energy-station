@@ -106,9 +106,6 @@
   .dc-day.predict { background: rgba(236,72,153,0.35); }
   .dc-day.ovu::after { content: ""; position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); }
   .dc-day.has-data::before { content: ""; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
-  .dc-legend { display: flex; justify-content: center; gap: 10px; margin-top: 8px; font-size: 10px; color: var(--text-dim); }
-  .dc-legend span { display: flex; align-items: center; gap: 4px; }
-  .dc-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
   .date-cal-backdrop { display: none; }
 
   .content {
@@ -752,17 +749,15 @@ function removeCheckinTask(idx) {
 
 // === 相册 ===
 function renderAlbum() {
-  const sorted = allData._album.slice().sort((a,b) => b.date.localeCompare(a.date));
-  const count = sorted.length;
-  const countEl = document.getElementById('albumCount2');
-  if (countEl) countEl.textContent = count + ' 张';
-  const grid = document.getElementById('albumGrid2');
+  const grid = document.getElementById('albumGrid');
   if (!grid) return;
-  // 加号按钮：点 ＋ 直接拍照；右下角小按钮：从相册选
-  const addBtn = '<div class="album-item album-add" onclick="document.getElementById(\'albumInputCamera\').click()"><span>＋</span><span>拍照</span></div>';
-  if (sorted.length === 0) { grid.innerHTML = addBtn; return; }
-  let html = addBtn;
-  sorted.forEach((photo, idx) => { html += '<div class="album-item" onclick="openModal(' + idx + ')"><img src="' + photo.data + '" alt=""><div class="album-date">' + photo.date + '</div></div>'; });
+  const day = getDayData(currentDate);
+  day.photos = day.photos || [];
+  let html = '';
+  day.photos.forEach((src, idx) => {
+    html += '<div class="album-item"><img src="' + src + '" onclick="openPhotoViewer(' + idx + ')"><button class="album-del" onclick="deletePhoto(' + idx + ')">×</button></div>';
+  });
+  html += '<div class="album-item album-add" onclick="document.getElementById(\'photoInput\').click()"><span>+</span></div>';
   grid.innerHTML = html;
 }
 function handleAlbumUpload(input) {
@@ -1286,6 +1281,7 @@ function renderDateCal() {
     const isPredict = !isPeriod && nextStart && ds >= nextStart && ds <= formatDate(new Date(parseDate(nextStart).getDate() + cfg.periodDays - 1));
     const isOvu = !isPeriod && ovuDate === ds;
     let cls = 'dc-day';
+    if (allData[ds] && (allData[ds].sleep || allData[ds].checkins || (allData[ds].diary && allData[ds].diary.length))) cls += ' has-data';
     if (isToday) cls += ' today';
     if (isSelected) cls += ' selected';
     if (isPeriod) cls += ' period';
@@ -1297,7 +1293,6 @@ function renderDateCal() {
   const nextPad = (7 - totalCells % 7) % 7;
   for (let d = 1; d <= nextPad; d++) h += '<div class="dc-day other">' + d + '</div>';
   h += '</div>';
-  h += '<div class="dc-legend"><span><i style="background:var(--red)"></i>月经期</span><span><i style="background:rgba(236,72,153,0.35)"></i>预测</span><span><i style="background:var(--purple)"></i>排卵</span></div>';
   el.innerHTML = h;
 }
 function selectDateCal(dateStr) {
