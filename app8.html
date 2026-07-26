@@ -624,8 +624,8 @@ function finalizeTime(input) {
   if (h > 23 || m > 59) { showToast('时间不对，请检查'); input.value = ''; return; }
   input.value = v.slice(0,2) + ':' + v.slice(2);
   // 触发保存
-  if (input.id === 'sleepTime') { getDayData(currentDate).sleep = input.value; saveData(allData); renderSleep(); renderHeatmap(); renderHistory(); renderAnalysis(); }
-  if (input.id === 'wakeTime') { getDayData(currentDate).wake = input.value; saveData(allData); renderSleep(); renderHeatmap(); renderHistory(); renderAnalysis(); }
+  if (input.id === 'sleepTime') { getDayData(currentDate).sleep = input.value; saveData(allData); renderSleep(); renderTopDate(); renderHeatmap(); renderHistory(); renderAnalysis(); }
+  if (input.id === 'wakeTime') { getDayData(currentDate).wake = input.value; saveData(allData); renderSleep(); renderTopDate(); renderHeatmap(); renderHistory(); renderAnalysis(); }
 }
 function renderSleep() {
   const day = getDayData(currentDate);
@@ -677,7 +677,7 @@ function renderCheckins() {
 function adjustCheckin(taskId, delta) {
   const current = getCheckinData(currentDate, taskId);
   setCheckinData(currentDate, taskId, current + delta);
-  renderCheckins(); renderHeatmap(); renderHistory(); renderAnalysis();
+  renderCheckins(); renderTopDate(); renderHeatmap(); renderHistory(); renderAnalysis();
   if (delta > 0) showToast('打卡 +1 ✓');
 }
 
@@ -912,7 +912,7 @@ function saveDiary() {
   day.diary = normalizeDiary(day.diary);
   day.diary = day.diary.filter(t => t && t.text && t.text.trim());
   saveData(allData);
-  renderDiary(); renderHistory(); renderAnalysis();
+  renderDiary(); renderTopDate(); renderHistory(); renderAnalysis();
   showToast('已保存 ✓');
 }
 
