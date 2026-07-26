@@ -105,6 +105,7 @@
   .dc-day.period { background: var(--red); color: #fff; }
   .dc-day.predict { background: rgba(236,72,153,0.35); }
   .dc-day.ovu::after { content: ""; position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); }
+  .dc-day.has-data::before { content: ""; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
   .dc-legend { display: flex; justify-content: center; gap: 10px; margin-top: 8px; font-size: 10px; color: var(--text-dim); }
   .dc-legend span { display: flex; align-items: center; gap: 4px; }
   .dc-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
@@ -414,8 +415,8 @@
     </div>
     <div class="menu-item" data-page="stats" onclick="switchPage('stats')">
       <div class="menu-dot" style="background:#8b5cf6"></div>
-      <div class="menu-icon">📊</div>
-      <div class="menu-text">统计</div>
+      <div class="menu-icon">📚</div>
+      <div class="menu-text">历史</div>
     </div>
     <div class="menu-item" data-page="analysis" onclick="switchPage('analysis')">
       <div class="menu-dot" style="background:#3b82f6"></div>
@@ -476,32 +477,12 @@
           <input type="file" id="albumInputCamera" accept="image/*" capture="environment" onchange="handleAlbumUpload(this)" style="display:none">
           <!-- 相册选择输入（无 capture，可选已有照片） -->
           <input type="file" id="albumInputGallery" accept="image/*" onchange="handleAlbumUpload(this)" style="display:none">
-          <div style="display:flex;gap:8px;margin-top:12px;justify-content:center">
-            <button class="album-action-btn" onclick="document.getElementById('albumInputCamera').click()">📷 拍照</button>
-            <button class="album-action-btn" onclick="document.getElementById('albumInputGallery').click()">🖼 从相册选</button>
-          </div>
+
         </div>
       </div>
 
       <!-- 统计 -->
       <div class="page" id="page-stats">
-        <div class="card">
-          <div class="card-title"><span class="icon">📊</span> 数据概览</div>
-          <div class="stats-grid">
-            <div class="stat-card"><div class="label">本周睡眠记录</div><div class="value blue" id="weekSleepDays">0</div><div class="sub">天</div></div>
-            <div class="stat-card"><div class="label">累计记录</div><div class="value yellow" id="totalDays">0</div><div class="sub">天有数据</div></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title"><span class="icon">🔥</span> 近30天热力图</div>
-          <div class="heatmap-wrap"><div class="heatmap" id="heatmap"></div></div>
-          <div class="heatmap-legend">
-            <span>少</span>
-            <div class="legend-cells"><div class="lc" style="background:var(--border)"></div><div class="lc" style="background:rgba(236,72,153,0.25)"></div><div class="lc" style="background:rgba(236,72,153,0.45)"></div><div class="lc" style="background:rgba(236,72,153,0.7)"></div><div class="lc" style="background:var(--accent)"></div></div>
-            <span>多</span><span style="margin-left:8px">·</span>
-            <div class="legend-cells"><div class="lc" style="background:var(--red)"></div></div><span>🌸经期</span>
-          </div>
-        </div>
         <div class="card">
           <div class="card-title"><span class="icon">📚</span> 历史记录</div>
           <div id="historyList"></div>
@@ -524,17 +505,6 @@
         <div class="analysis-card">
           <div class="analysis-title"><span>💆‍♀️</span> 打卡坚持分析</div>
           <div id="checkinAnalysisList"></div>
-        </div>
-        <div class="analysis-card">
-          <div class="analysis-title"><span>🌸</span> 经期周期分析</div>
-          <div class="analysis-big" id="periodCycle">—</div>
-          <div class="analysis-desc" id="periodCycleDesc">平均周期天数</div>
-          <div style="margin-top:14px">
-            <div class="analysis-row"><span class="ar-label">上次经期开始</span><span class="ar-value" id="lastPeriod">—</span></div>
-            <div class="analysis-row"><span class="ar-label">预计下次经期</span><span class="ar-value" id="nextPeriod">—</span></div>
-            <div class="analysis-row"><span class="ar-label">距下次还有</span><span class="ar-value" id="daysToNext">—</span></div>
-            <div class="analysis-row"><span class="ar-label">经期规律性</span><span class="ar-value" id="periodRegularity">—</span></div>
-          </div>
         </div>
         <div class="analysis-card">
           <div class="analysis-title"><span>💡</span> 今日洞察</div>
@@ -1163,54 +1133,9 @@ function renderPreNotice() {
   return html;
 }
 
-function renderStats() {
-  const today = parseDate(getTodayStr());
-  const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay());
-  let weekSleepDays = 0;
-  for (let i=0; i<7; i++) {
-    const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
-    const ds = formatDate(d);
-    if (allData[ds] && allData[ds].sleep && allData[ds].wake) weekSleepDays++;
-  }
-  document.getElementById('weekSleepDays').textContent = weekSleepDays;
-  let totalDays = 0;
-  Object.keys(allData).forEach(d => { if (/^\d{4}-\d{2}-\d{2}$/.test(d)) totalDays++; });
-  document.getElementById('totalDays').textContent = totalDays;
-}
-
-function renderHeatmap() {
-  const wrap = document.getElementById('heatmap');
-  wrap.innerHTML = '';
-  const today = parseDate(getTodayStr());
-  for (let i=29; i>=0; i--) {
-    const d = new Date(today); d.setDate(today.getDate() - i);
-    const ds = formatDate(d);
-    let level = 0, isPeriod = isPeriodActive(ds);
-    if (allData[ds]) {
-      let done = 0;
-      if (allData[ds].sleep && allData[ds].wake) done++;
-      if (allData[ds].checkins) getCheckinTasks().forEach(t => { if (allData[ds].checkins[t.id] > 0) done++; });
-      if (allData[ds].diary && allData[ds].diary.filter(x => x && x.text && x.text.trim()).length > 0) done++;
-      if (done >= 4) level = 4;
-      else if (done >= 3) level = 3;
-      else if (done >= 2) level = 2;
-      else if (done >= 1) level = 1;
-    }
-    let cls = 'heat-cell l' + level;
-    if (isPeriod) cls += ' period';
-    if (ds === getTodayStr()) cls += ' today';
-    const cell = document.createElement('div');
-    cell.className = cls;
-    const mmdd = (d.getMonth()+1) + '/' + d.getDate();
-    let tip = mmdd;
-    if (isPeriod) tip += ' · 🌸经期';
-    if (level > 0) tip += ' · 有记录';
-    else if (!isPeriod) tip += ' · 无记录';
-    cell.innerHTML = '<span class="heat-tooltip">' + tip + '</span>';
-    cell.onclick = () => { currentDate = ds; switchPage('today'); renderAll(); };
-    wrap.appendChild(cell);
-  }
-}
+// 数据概览卡片已删除，v9 仅保留历史记录
+function renderStats() {}
+function renderHeatmap() {}
 
 function renderHistory() {
   const list = document.getElementById('historyList');
@@ -1255,7 +1180,6 @@ function renderAnalysis() {
       const [wh, wm] = allData[ds].wake.split(':').map(Number);
       sleepMins.push(mins); sleepTimes.push(sh*60+sm); wakeTimes.push(wh*60+wm);
       sleepTotal++;
-      // 早睡定义：22:00-22:59 之前入睡（不含23点后及凌晨）
       if (sh >= 20 && sh < 23) earlyCount++;
       if (mins >= 420) enoughCount++;
     }
@@ -1286,7 +1210,6 @@ function renderAnalysis() {
     const isDay = !t.targetType || t.targetType === 'day';
     let weekLabel, weekValue;
     if (isDay) {
-      // 每天目标：本周有几天完成了（打卡次数>=target）
       const today = parseDate(getTodayStr());
       const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay());
       let doneDays = 0;
@@ -1301,57 +1224,23 @@ function renderAnalysis() {
   });
   checkinList.innerHTML = checkinHtml;
 
-  const lastStart = getLastPeriodStart();
-  const avgCycle = getAvgCycle();
-  const completed = allData._periods.filter(p => p.end).sort((a,b) => a.start.localeCompare(b.start));
-  if (allData._periods.length === 0) {
-    document.getElementById('periodCycle').textContent = '—';
-    document.getElementById('periodCycleDesc').textContent = '还没有经期记录';
-    ['lastPeriod','nextPeriod','daysToNext','periodRegularity'].forEach(id => document.getElementById(id).textContent = '—');
-  } else {
-    document.getElementById('lastPeriod').textContent = lastStart;
-    if (completed.length >= 2) {
-      const cycles = [];
-      for (let i = 1; i < completed.length; i++) cycles.push(daysBetween(completed[i-1].start, completed[i].start));
-      const stdDev = Math.sqrt(cycles.reduce((s,c)=>s+Math.pow(c-avgCycle,2),0)/cycles.length);
-      let reg = '规律';
-      if (stdDev > 7) reg = '不规律';
-      else if (stdDev > 3) reg = '基本规律';
-      document.getElementById('periodCycle').textContent = avgCycle + ' 天';
-      document.getElementById('periodCycleDesc').textContent = '基于 ' + cycles.length + ' 次记录的平均周期';
-      document.getElementById('periodRegularity').textContent = reg + ' (波动±' + Math.round(stdDev) + '天)';
-    } else {
-      document.getElementById('periodCycle').textContent = '~' + avgCycle + ' 天';
-      document.getElementById('periodCycleDesc').textContent = '默认周期，需2次以上记录计算';
-      document.getElementById('periodRegularity').textContent = '数据不足';
-    }
-    const next = new Date(parseDate(lastStart)); next.setDate(next.getDate() + avgCycle);
-    const nextStr = formatDate(next);
-    document.getElementById('nextPeriod').textContent = nextStr;
-    const daysLeft = daysBetween(getTodayStr(), nextStr);
-    document.getElementById('daysToNext').textContent = daysLeft > 0 ? daysLeft + ' 天' : '已过/进行中';
-  }
-
-  const isActive = isPeriodActive(getTodayStr());
   const insights = [];
   getCheckinTasks().forEach(t => {
     const total = getTotalCheckinCount(t.id);
     const weekCount = getWeekCheckinCount(t.id);
     const isDay2 = !t.targetType || t.targetType === 'day';
-  if (total === 0) insights.push({ title: t.name + '起步', text: '还没开始' + t.name + '打卡。今天先做一次。' });
-  else if (isDay2) {
-    const todayCnt = getCheckinData(getTodayStr(), t.id);
-    if (todayCnt < t.target) insights.push({ title: t.name + '今日', text: '今天已完成' + todayCnt + '/' + t.target + '次，还差' + (t.target - todayCnt) + '次。' });
-    else insights.push({ title: t.name + '达标', text: '今天已完成' + t.target + '次，继续保持！' });
-  } else {
-    if (weekCount < t.target) insights.push({ title: t.name + '本周进度', text: '本周已完成' + weekCount + '/' + t.target + '次，还差' + (t.target - weekCount) + '次。' });
-    else insights.push({ title: t.name + '达标', text: '本周已完成' + t.target + '次，继续保持！' });
-  }
+    if (total === 0) insights.push({ title: t.name + '起步', text: '还没开始' + t.name + '打卡。今天先做一次。' });
+    else if (isDay2) {
+      const todayCnt = getCheckinData(getTodayStr(), t.id);
+      if (todayCnt < t.target) insights.push({ title: t.name + '今日', text: '今天已完成' + todayCnt + '/' + t.target + '次，还差' + (t.target - todayCnt) + '次。' });
+      else insights.push({ title: t.name + '达标', text: '今天已完成' + t.target + '次，继续保持！' });
+    } else {
+      if (weekCount < t.target) insights.push({ title: t.name + '本周进度', text: '本周已完成' + weekCount + '/' + t.target + '次，还差' + (t.target - weekCount) + '次。' });
+      else insights.push({ title: t.name + '达标', text: '本周已完成' + t.target + '次，继续保持！' });
+    }
   });
   if (sleepTotal > 0 && enoughCount / sleepTotal < 0.5) insights.push({ title: '睡眠不足预警', text: '近7天只有' + Math.round(enoughCount/sleepTotal*100) + '%睡够7小时。23点前入睡。' });
   else if (sleepTotal > 0) insights.push({ title: '睡眠改善', text: '近7天有' + enoughCount + '天睡够了7小时，继续保持。' });
-  if (isActive) insights.push({ title: '经期关怀', text: '经期期间注意保暖补铁，避免生冷辛辣。' });
-  else if (lastStart && daysBetween(getTodayStr(), formatDate(new Date(parseDate(lastStart).getTime()+avgCycle*86400000))) <= 3) insights.push({ title: '经前提醒', text: '月经即将来临，准备好卫生用品。' });
   document.getElementById('insightBox').innerHTML = insights.map(i => '<div style="margin-bottom:10px"><div class="insight-title">' + i.title + '</div><div>' + i.text + '</div></div>').join('');
 }
 
