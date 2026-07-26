@@ -472,9 +472,6 @@
           <div class="album-grid" id="albumGrid2"></div>
           <!-- 拍照输入（capture=environment 直接调相机） -->
           <input type="file" id="albumInputCamera" accept="image/*" capture="environment" onchange="handleAlbumUpload(this)" style="display:none">
-          <!-- 相册选择输入（无 capture，可选已有照片） -->
-          <input type="file" id="albumInputGallery" accept="image/*" onchange="handleAlbumUpload(this)" style="display:none">
-
         </div>
       </div>
 
@@ -749,15 +746,17 @@ function removeCheckinTask(idx) {
 
 // === 相册 ===
 function renderAlbum() {
-  const grid = document.getElementById('albumGrid');
+  const grid = document.getElementById('albumGrid2');
   if (!grid) return;
   const day = getDayData(currentDate);
   day.photos = day.photos || [];
+  const countBadge = document.getElementById('albumCount2');
+  if (countBadge) countBadge.textContent = day.photos.length + ' 张';
   let html = '';
   day.photos.forEach((src, idx) => {
     html += '<div class="album-item"><img src="' + src + '" onclick="openPhotoViewer(' + idx + ')"><button class="album-del" onclick="deletePhoto(' + idx + ')">×</button></div>';
   });
-  html += '<div class="album-item album-add" onclick="document.getElementById(\'photoInput\').click()"><span>+</span></div>';
+  html += '<div class="album-item album-add" onclick="document.getElementById(\'albumInputCamera\').click()"><span>+</span></div>';
   grid.innerHTML = html;
 }
 function handleAlbumUpload(input) {
