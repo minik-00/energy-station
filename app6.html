@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="能量站">
+<meta name="theme-color" content="#fdf2f8">
+<title>能量站 · 我的能量工作台</title>
+<style>
+  :root {
+    --bg: #fdf2f8; --card: #ffffff; --card-hover: #fff5f8;
+    --border: #fbcfe8; --text: #831843; --text-dim: #9d174d;
+    --accent: #ec4899; --accent-soft: rgba(236,72,153,0.12);
+    --green: #10b981; --green-soft: rgba(16,183,129,0.12);
+    --yellow: #f59e0b; --yellow-soft: rgba(245,158,11,0.12);
+    --pink: #ec4899; --pink-soft: rgba(236,72,153,0.12);
+    --orange: #f97316; --orange-soft: rgba(249,115,22,0.12);
+    --blue: #3b82f6; --blue-soft: rgba(59,130,246,0.12);
+    --red: #ef4444; --red-soft: rgba(239,68,68,0.12);
+    --purple: #8b5cf6; --purple-soft: rgba(139,92,246,0.12);
+    --nav-w: 130px; --sidebar-w: 220px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); height: 100%; overflow: hidden; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  #app { height: 100vh; height: 100dvh; display: flex; flex-direction: row; }
+
+  /* 左侧导航栏 */
+  .sidebar {
+    width: var(--nav-w);
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    padding: 16px 8px calc(16px + var(--safe-bottom));
+    overflow-y: auto;
+  }
+  .sidebar::-webkit-scrollbar { width: 0; }
+  .logo-area {
+    text-align: center;
+    padding: 8px 0 16px;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .logo-circle {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, #ec4899, #f472b6);
+    margin: 0 auto 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 20px; font-weight: 700;
+    box-shadow: 0 4px 14px rgba(236,72,153,0.25);
+  }
+  .logo-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .logo-sub { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 8px;
+    margin-bottom: 6px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-dim);
+  }
+  .menu-item:hover { background: var(--bg); }
+  .menu-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .menu-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .menu-icon { font-size: 16px; }
+  .menu-text { font-size: 12px; }
+  .menu-badge { width: 7px; height: 7px; border-radius: 50%; background: var(--red); margin-left: auto; flex-shrink: 0; }
+
+  /* 右侧内容区 */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+  .top-bar {
+    height: 56px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    flex-shrink: 0;
+  }
+  .top-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .top-date { font-size: 12px; color: var(--text-dim); background: var(--bg); padding: 4px 10px; border-radius: 12px; }
+  .date-picker { font-size: 12px; color: var(--text-dim); background: var(--card); padding: 4px 8px; border: 1px solid var(--border); border-radius: 10px; }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px;
+  }
+  .content::-webkit-scrollbar { width: 0; }
+  .page { display: none; animation: fadeIn 0.25s; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* 卡片 */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(236,72,153,0.06);
+  }
+  .card-title {
+    font-size: 15px; font-weight: 700;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+    color: var(--text);
+  }
+  .card-title .icon { font-size: 18px; }
+  .card-title .badge { font-size: 10px; background: var(--accent-soft); color: var(--accent); padding: 2px 8px; border-radius: 8px; margin-left: auto; font-weight: 500; }
+
+  .section-label { font-size: 12px; color: var(--text-dim); margin: 18px 0 10px; padding-left: 4px; font-weight: 600; }
+
+  /* 两列布局 */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* 打卡卡片 */
+  .checkin-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .checkin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .checkin-name { font-size: 14px; font-weight: 700; }
+  .checkin-desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .checkin-controls { display: flex; align-items: center; gap: 8px; }
+  .checkin-btn {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--text); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .checkin-btn:active { transform: scale(0.9); }
+  .checkin-btn.plus { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-size: 18px; }
+  .checkin-count { font-size: 18px; font-weight: 700; min-width: 24px; text-align: center; color: var(--accent); }
+  .checkin-progress { margin-top: 8px; }
+  .checkin-progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .checkin-progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+  .checkin-footer { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-dim); }
+  .checkin-target.done { color: var(--green); font-weight: 600; }
+
+  /* 睡眠输入 */
+  .sleep-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  .sleep-info .sleep-name { font-size: 14px; font-weight: 700; }
+  .sleep-info .sleep-desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .sleep-inputs { display: flex; align-items: center; gap: 8px; }
+  .sleep-input {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 8px; border-radius: 10px; font-size: 14px; width: 78px; text-align: center;
+  }
+  .sleep-arrow { color: var(--text-dim); font-size: 12px; }
+  .sleep-result { font-size: 11px; color: var(--blue); margin-top: 8px; text-align: right; }
+
+  /* 变化相册 */
+  .album-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  @media (max-width: 480px) { .album-grid { grid-template-columns: repeat(3, 1fr); } }
+  .album-item { aspect-ratio: 1; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; position: relative; cursor: pointer; }
+  .album-item img { width: 100%; height: 100%; object-fit: cover; }
+  .album-item .album-date { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(131,24,67,0.7); color: #fff; font-size: 9px; padding: 3px; text-align: center; }
+  .album-add { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-dim); font-size: 22px; }
+  .album-add span { font-size: 10px; margin-top: 4px; }
+  #albumInput { display: none; }
+
+  /* 日记 */
+  .diary-entry { display: flex; gap: 8px; margin-bottom: 10px; align-items: flex-start; }
+  .diary-entry-input {
+    flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 12px; border-radius: 12px; font-size: 14px; font-family: inherit;
+    resize: none; line-height: 1.5; min-height: 42px;
+  }
+  .diary-entry-input:focus { outline: none; border-color: var(--accent); }
+  .diary-entry-del { width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--red); font-size: 16px; cursor: pointer; flex-shrink: 0; margin-top: 5px; }
+  .diary-entry-del:active { transform: scale(0.9); }
+  .diary-add-btn {
+    width: 100%; padding: 12px; border: 1px dashed var(--border);
+    border-radius: 12px; background: transparent; color: var(--text-dim);
+    font-size: 14px; cursor: pointer; transition: all 0.2s;
+  }
+  .diary-add-btn:active { border-color: var(--accent); color: var(--accent); }
+  .diary-save-row { display: flex; justify-content: flex-end; margin-top: 14px; }
+  .save-btn { background: var(--accent); color: white; border: none; padding: 10px 22px; border-radius: 12px; font-size: 14px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(236,72,153,0.25); }
+  .save-btn:active { opacity: 0.8; }
+
+  /* 经期 */
+  .period-status-box { background: var(--bg); border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px; border: 1px solid var(--border); }
+  .period-status-box .ps-icon { font-size: 36px; margin-bottom: 6px; }
+  .period-status-box .ps-text { font-size: 16px; font-weight: 700; color: var(--text); }
+  .period-status-box .ps-sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .period-status-box.alert { background: var(--pink-soft); border-color: var(--accent); }
+  .period-status-box.alert .ps-text { color: var(--accent); }
+  .period-status-box.active { background: var(--red-soft); border-color: var(--red); }
+  .period-status-box.active .ps-text { color: var(--red); }
+  .period-action-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .period-action-btn { flex: 1; padding: 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .period-action-btn:active { transform: scale(0.97); }
+  .period-action-btn.start { border-color: var(--accent); background: var(--pink-soft); color: var(--accent); }
+  .period-action-btn.end { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+  .period-action-btn:disabled { opacity: 0.4; }
+  .period-config-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg); border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
+  .period-config-row .pcr-label { font-size: 14px; font-weight: 600; }
+  .period-config-row .pcr-input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 10px; font-size: 14px; width: 80px; text-align: center; }
+  .notice-box { background: var(--bg); border-radius: 12px; padding: 14px; margin-top: 10px; border: 1px solid var(--border); }
+  .notice-section { margin-bottom: 14px; }
+  .notice-section:last-child { margin-bottom: 0; }
+  .notice-section .ns-title { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .notice-list { list-style: none; padding-left: 0; }
+  .notice-list li { font-size: 12px; color: var(--text); padding: 5px 0 5px 18px; position: relative; line-height: 1.6; }
+  .notice-list li::before { content: "•"; position: absolute; left: 4px; color: var(--accent); }
+  .notice-list li.avoid { color: var(--orange); }
+  .notice-list li.avoid::before { content: "✗"; color: var(--red); }
+  .notice-list li.recommend { color: var(--green); }
+  .notice-list li.recommend::before { content: "✓"; color: var(--green); }
+  .period-history-item { padding: 10px 12px; background: var(--bg); border-radius: 12px; margin-bottom: 8px; font-size: 13px; border: 1px solid var(--border); }
+  .period-history-item .phi-row { display: flex; justify-content: space-between; }
+  .period-history-item .phi-duration { color: var(--text-dim); font-size: 11px; margin-top: 4px; }
+  .period-reminder { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--accent); box-shadow: 0 2px 8px rgba(236,72,153,0.08); }
+  .period-reminder.active { border-color: var(--red); }
+  .period-reminder.alert { border-color: var(--accent); }
+  .pr-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .pr-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .pr-status { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); }
+  .pr-status.active { background: var(--red-soft); color: var(--red); }
+  .pr-content { font-size: 13px; color: var(--text); line-height: 1.7; }
+  .pr-link { font-size: 12px; color: var(--accent); margin-top: 8px; display: inline-block; cursor: pointer; font-weight: 600; }
+
+  /* 统计 */
+  .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 14px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(236,72,153,0.06); }
+  .stat-card .label { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+  .stat-card .value { font-size: 26px; font-weight: 700; line-height: 1.2; color: var(--accent); }
+  .stat-card .sub { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
+  .stat-card .value.green { color: var(--green); } .stat-card .value.blue { color: var(--blue); }
+  .stat-card .value.yellow { color: var(--yellow); }
+
+  .heatmap-wrap { overflow-x: auto; padding-bottom: 6px; }
+  .heatmap { display: grid; grid-template-columns: repeat(15, 1fr); gap: 5px; }
+  .heat-cell { aspect-ratio: 1; border-radius: 4px; background: var(--border); cursor: pointer; position: relative; transition: transform 0.15s; }
+  .heat-cell:active { transform: scale(1.2); }
+  .heat-cell.l1 { background: rgba(236,72,153,0.25); }
+  .heat-cell.l2 { background: rgba(236,72,153,0.45); }
+  .heat-cell.l3 { background: rgba(236,72,153,0.7); }
+  .heat-cell.l4 { background: var(--accent); }
+  .heat-cell.today { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .heat-cell.period { background: var(--red) !important; }
+  .heat-tooltip { position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); padding: 5px 9px; border-radius: 6px; font-size: 10px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 10; color: var(--text); }
+  .heat-cell:hover .heat-tooltip { opacity: 1; }
+  .heatmap-legend { display: flex; align-items: center; gap: 6px; justify-content: flex-end; margin-top: 10px; font-size: 10px; color: var(--text-dim); flex-wrap: wrap; }
+  .heatmap-legend .legend-cells { display: flex; gap: 3px; align-items: center; }
+  .heatmap-legend .lc { width: 11px; height: 11px; border-radius: 2px; }
+
+  /* 分析 */
+  .analysis-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(236,72,153,0.06); }
+  .analysis-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .analysis-big { font-size: 32px; font-weight: 700; text-align: center; padding: 10px 0; color: var(--accent); }
+  .analysis-desc { font-size: 12px; color: var(--text-dim); text-align: center; }
+  .analysis-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .analysis-row:last-child { border-bottom: none; }
+  .analysis-row .ar-label { color: var(--text-dim); }
+  .analysis-row .ar-value { color: var(--text); font-weight: 600; }
+  .insight-box { background: var(--bg); border-left: 3px solid var(--accent); padding: 12px 14px; border-radius: 12px; font-size: 13px; line-height: 1.7; color: var(--text); border: 1px solid var(--border); }
+  .insight-box .insight-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+
+  .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .history-item:last-child { border-bottom: none; }
+  .history-item .hi-date { font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .history-item .hi-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; }
+  .history-item .hi-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: var(--bg); color: var(--text-dim); border: 1px solid var(--border); }
+  .history-item .hi-tag.sleep { background: var(--blue-soft); color: var(--blue); border-color: var(--blue-soft); }
+  .history-item .hi-tag.period { background: var(--pink-soft); color: var(--accent); border-color: var(--pink-soft); }
+  .history-item .hi-tag.checkin { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid transparent; }
+  .history-item .hi-diary { color: var(--text-dim); font-size: 12px; margin-top: 6px; line-height: 1.6; }
+  .history-item .hi-diary-item { padding: 2px 0; }
+  .history-empty { text-align: center; color: var(--text-dim); padding: 40px 20px; font-size: 13px; }
+
+  /* 弹窗 */
+  .modal { position: fixed; inset: 0; background: rgba(131,24,67,0.95); display: none; align-items: center; justify-content: center; z-index: 200; flex-direction: column; }
+  .modal.active { display: flex; }
+  .modal img { max-width: 90%; max-height: 70%; border-radius: 16px; object-fit: contain; }
+  .modal-info { color: white; margin-top: 16px; font-size: 14px; text-align: center; }
+  .modal-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 28px; cursor: pointer; }
+  .modal-delete { margin-top: 12px; background: var(--red); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-size: 13px; cursor: pointer; }
+
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--accent); color: white; padding: 12px 24px; border-radius: 24px; font-size: 14px; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 100; box-shadow: 0 4px 16px rgba(236,72,153,0.35); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 大屏优化 */
+  @media (min-width: 768px) {
+    .sidebar { width: var(--sidebar-w); padding: 20px 12px; }
+    .menu-item { padding: 12px 14px; }
+    .menu-icon { font-size: 18px; }
+    .menu-text { font-size: 14px; }
+    .logo-circle { width: 56px; height: 56px; font-size: 24px; }
+    .logo-title { font-size: 15px; }
+    .content { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- 左侧导航栏 -->
+  <div class="sidebar">
+    <div class="logo-area">
+      <div class="logo-circle">能量</div>
+      <div class="logo-title">能量站</div>
+      <div class="logo-sub">我的成长工作台</div>
+    </div>
+    <div class="menu-item active" data-page="today" onclick="switchPage('today')">
+      <div class="menu-dot" style="background:#ec4899"></div>
+      <div class="menu-icon">✅</div>
+      <div class="menu-text">打卡</div>
+    </div>
+    <div class="menu-item" data-page="plan" onclick="switchPage('plan')">
+      <div class="menu-dot" style="background:#f97316"></div>
+      <div class="menu-icon">📋</div>
+      <div class="menu-text">计划</div>
+    </div>
+    <div class="menu-item" data-page="diary" onclick="switchPage('diary')">
+      <div class="menu-dot" style="background:#10b981"></div>
+      <div class="menu-icon">📝</div>
+      <div class="menu-text">日记</div>
+    </div>
+    <div class="menu-item" data-page="period" id="menuPeriod" onclick="switchPage('period')">
+      <div class="menu-dot" style="background:#ef4444"></div>
+      <div class="menu-icon">🌸</div>
+      <div class="menu-text">经期</div>
+    </div>
+    <div class="menu-item" data-page="album" onclick="switchPage('album')">
+      <div class="menu-dot" style="background:#f59e0b"></div>
+      <div class="menu-icon">📸</div>
+      <div class="menu-text">相册</div>
+    </div>
+    <div class="menu-item" data-page="stats" onclick="switchPage('stats')">
+      <div class="menu-dot" style="background:#8b5cf6"></div>
+      <div class="menu-icon">📊</div>
+      <div class="menu-text">统计</div>
+    </div>
+    <div class="menu-item" data-page="analysis" onclick="switchPage('analysis')">
+      <div class="menu-dot" style="background:#3b82f6"></div>
+      <div class="menu-icon">🔍</div>
+      <div class="menu-text">分析</div>
+    </div>
+  </div>
+
+  <!-- 右侧内容区 -->
+  <div class="main">
+    <div class="top-bar">
+      <div class="top-title" id="topTitle">每日打卡</div>
+      <div class="top-date" id="topDate"></div>
+      <input type="date" class="date-picker" id="datePicker" onchange="changeDate(this.value)" title="点击选择日期，可补录以前的记录" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);padding:6px 10px;border:1.5px solid var(--accent);border-radius:12px;background:var(--accent-soft)">
+      <div style="font-size:10px;color:var(--text-dim)">📅 点日期改</div>
+    </div>
+    <div class="content">
+
+      <!-- 打卡 -->
+      <div class="page active" id="page-today">
+        <div class="period-reminder" id="periodReminder" style="display:none">
+          <div class="pr-header">
+            <div class="pr-title"><span id="prIcon">🌸</span> <span id="prTitle">经期提醒</span></div>
+            <div class="pr-status" id="prStatus">—</div>
+          </div>
+          <div class="pr-content" id="prContent"></div>
+          <div class="pr-link" onclick="switchPage('period')">查看详情 ›</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="icon">🌙</span> 睡眠时间</div>
+          <div class="sleep-row">
+            <div class="sleep-inputs">
+              <input type="text" inputmode="numeric" class="sleep-input" id="sleepTime" value="" placeholder="0205" maxlength="4" oninput="autoFormatTime(this)" onblur="finalizeTime(this)">
+              <span class="sleep-arrow">→</span>
+              <input type="text" inputmode="numeric" class="sleep-input" id="wakeTime" value="" placeholder="0700" maxlength="4" oninput="autoFormatTime(this)" onblur="finalizeTime(this)">
+              <span class="sleep-result" id="sleepResult" style="margin-top:0;margin-left:8px"></span>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:6px;line-height:1.5">直接输 4 位数字，如凌晨 2:05 输 <b style="color:var(--accent)">0205</b>，早 7:00 输 <b style="color:var(--accent)">0700</b>，晚上 23:30 输 <b style="color:var(--accent)">2330</b>。</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="icon">🎯</span> 今日打卡</div>
+          <div class="two-col" id="checkinGrid"></div>
+        </div>
+      </div>
+
+      <!-- 每日计划 -->
+      <div class="page" id="page-plan">
+        <div class="card">
+          <div class="card-title"><span class="icon">📋</span> 每日计划 <span class="badge" id="planCount">0 条</span></div>
+          <div id="planList"></div>
+          <button class="diary-add-btn" onclick="addPlanEntry()">＋ 添加一条计划</button>
+          <div class="diary-save-row">
+            <button class="save-btn" onclick="savePlan()">保存计划</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 日记 -->
+      <div class="page" id="page-diary">
+        <div class="card">
+          <div class="card-title"><span class="icon">📝</span> 日记 <span class="badge" id="diaryCount">0 条</span></div>
+          <div id="diaryList"></div>
+          <button class="diary-add-btn" onclick="addDiaryEntry()">＋ 添加一条记录</button>
+          <div class="diary-save-row">
+            <button class="save-btn" onclick="saveDiary()">保存日记</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 经期 -->
+      <div class="page" id="page-period">
+        <div class="card">
+          <div class="card-title"><span class="icon">🌸</span> 经期状态</div>
+          <div class="period-status-box" id="periodStatusBox">
+            <div class="ps-icon" id="psIcon">🌸</div>
+            <div class="ps-text" id="psText">点击下方按钮记录</div>
+            <div class="ps-sub" id="psSub">开始记录你的经期周期</div>
+          </div>
+          <div class="period-action-row">
+            <button class="period-action-btn start" id="periodStartBtn" onclick="startPeriod()">来月经了</button>
+            <button class="period-action-btn end" id="periodEndBtn" onclick="endPeriod()" disabled>月经结束</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">⚙️</span> 周期设置</div>
+          <div class="period-config-row"><span class="pcr-label">我的周期天数</span><input type="number" class="pcr-input" id="cycleDaysInput" min="21" max="45" value="28" onchange="updateCycleDays(this.value)"></div>
+          <div class="period-config-row"><span class="pcr-label">经期持续天数</span><input type="number" class="pcr-input" id="periodDaysInput" min="2" max="10" value="5" onchange="updatePeriodDays(this.value)"></div>
+          <div style="font-size:11px;color:var(--text-dim);padding:8px 4px">默认28天周期、5天经期。记录2次以上系统自动学习实际周期。</div>
+        </div>
+        <div class="card" id="periodNoticeCard" style="display:none">
+          <div class="card-title"><span class="icon">💡</span> <span id="noticeCardTitle">经期注意事项</span></div>
+          <div class="notice-box" id="periodNoticeBox"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">📅</span> 周期记录</div>
+          <div id="periodHistoryList"></div>
+        </div>
+      </div>
+
+      <!-- 相册 -->
+      <div class="page" id="page-album">
+        <div class="card">
+          <div class="card-title"><span class="icon">📸</span> 变化相册 <span class="badge" id="albumCount2">0 张</span></div>
+          <div class="album-grid" id="albumGrid2">
+            <div class="album-item album-add" onclick="document.getElementById('albumInput2').click()">
+              <span>＋</span><span>添加</span>
+            </div>
+          </div>
+          <input type="file" id="albumInput2" accept="image/*" onchange="handleAlbumUpload(this)" style="display:none">
+          <div style="font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center">每周拍一张自拍或全身照，记录自己的变化。照片只存在手机里。</div>
+        </div>
+      </div>
+
+      <!-- 统计 -->
+      <div class="page" id="page-stats">
+        <div class="card">
+          <div class="card-title"><span class="icon">📊</span> 数据概览</div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="label">本周睡眠记录</div><div class="value blue" id="weekSleepDays">0</div><div class="sub">天</div></div>
+            <div class="stat-card"><div class="label">累计记录</div><div class="value yellow" id="totalDays">0</div><div class="sub">天有数据</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">🔥</span> 近30天热力图</div>
+          <div class="heatmap-wrap"><div class="heatmap" id="heatmap"></div></div>
+          <div class="heatmap-legend">
+            <span>少</span>
+            <div class="legend-cells"><div class="lc" style="background:var(--border)"></div><div class="lc" style="background:rgba(236,72,153,0.25)"></div><div class="lc" style="background:rgba(236,72,153,0.45)"></div><div class="lc" style="background:rgba(236,72,153,0.7)"></div><div class="lc" style="background:var(--accent)"></div></div>
+            <span>多</span><span style="margin-left:8px">·</span>
+            <div class="legend-cells"><div class="lc" style="background:var(--red)"></div></div><span>🌸经期</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">📚</span> 历史记录</div>
+          <div id="historyList"></div>
+        </div>
+      </div>
+
+      <!-- 分析 -->
+      <div class="page" id="page-analysis">
+        <div class="analysis-card">
+          <div class="analysis-title"><span>🌙</span> 睡眠分析</div>
+          <div class="analysis-big" id="avgSleep">—</div>
+          <div class="analysis-desc">近7天平均睡眠时长</div>
+          <div style="margin-top:14px">
+            <div class="analysis-row"><span class="ar-label">平均入睡时间</span><span class="ar-value" id="avgSleepTime">—</span></div>
+            <div class="analysis-row"><span class="ar-label">平均起床时间</span><span class="ar-value" id="avgWakeTime">—</span></div>
+            <div class="analysis-row"><span class="ar-label">早睡达标率</span><span class="ar-value" id="earlySleepRate">—</span></div>
+            <div class="analysis-row"><span class="ar-label">充足睡眠率</span><span class="ar-value" id="enoughSleepRate">—</span></div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-title"><span>💆‍♀️</span> 打卡坚持分析</div>
+          <div id="checkinAnalysisList"></div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-title"><span>🌸</span> 经期周期分析</div>
+          <div class="analysis-big" id="periodCycle">—</div>
+          <div class="analysis-desc" id="periodCycleDesc">平均周期天数</div>
+          <div style="margin-top:14px">
+            <div class="analysis-row"><span class="ar-label">上次经期开始</span><span class="ar-value" id="lastPeriod">—</span></div>
+            <div class="analysis-row"><span class="ar-label">预计下次经期</span><span class="ar-value" id="nextPeriod">—</span></div>
+            <div class="analysis-row"><span class="ar-label">距下次还有</span><span class="ar-value" id="daysToNext">—</span></div>
+            <div class="analysis-row"><span class="ar-label">经期规律性</span><span class="ar-value" id="periodRegularity">—</span></div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-title"><span>💡</span> 今日洞察</div>
+          <div class="insight-box" id="insightBox"><div class="insight-title">坚持的力量</div><div id="insightText">开始记录后，这里会出现针对你的个性化建议。</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="albumModal" onclick="closeModal(event)">
+  <div class="modal-close" onclick="closeModal(event)">×</div>
+  <img id="modalImg" src="" alt="">
+  <div class="modal-info" id="modalInfo"></div>
+  <button class="modal-delete" id="modalDelete" onclick="deleteCurrentPhoto()">删除这张照片</button>
+</div>
+
+<div class="toast" id="toast">已保存 ✓</div>
+
+<script>
+const STORAGE_KEY = 'energy_workbench_v10';
+
+// === 数据迁移：保留旧版记录 ===
+function migrateData() {
+  // 先看当前版本有没有数据
+  let existing = loadData();
+  if (existing && Object.keys(existing).length > 0) return existing;
+  // 没有就从旧版迁移
+  const oldKeys = ['energy_workbench_v9','energy_workbench_v8','energy_workbench_v7'];
+  for (const k of oldKeys) {
+    try {
+      const d = JSON.parse(localStorage.getItem(k));
+      if (d && Object.keys(d).length > 0) {
+        saveData(d);  // 立即存到新版本
+        return d;
+      }
+    } catch(e) {}
+  }
+  return {};
+}
+const CHECKIN_TASKS = [
+  { id: 'face', name: '脸部按摩', desc: '每天2次', target: 2, targetType: 'day', color: '#ec4899' },
+  { id: 'exercise', name: '运动', desc: '每周3次', target: 3, targetType: 'week', color: '#10b981' },
+  { id: 'tea', name: '养生茶', desc: '每周3次', target: 3, targetType: 'week', color: '#f59e0b' },
+];
+const PAGE_TITLES = { today: '每日打卡', plan: '每日计划', diary: '我的日记', period: '经期管理', album: '变化相册', stats: '数据统计', analysis: '数据分析' };
+const PERIOD_NOTICES = {
+  diet: { title: '🍎 饮食注意', avoid: ['生冷食物（冰饮、冰激凌、生鱼片）','辛辣刺激（火锅、麻辣烫、辣椒）','咖啡因（咖啡、浓茶、可乐）','酒精类饮品','寒性水果（西瓜、梨、柚子、火龙果）'], recommend: ['温热食物（粥、汤、面条）','补铁食物（红肉、动物肝脏、菠菜）','红糖姜茶（暖宫驱寒）','富含维生素C的水果（橙子、猕猴桃）','温性食物（红枣、桂圆、核桃）'] },
+  exercise: { title: '🏃 运动注意', avoid: ['高强度有氧（快跑、跳绳、HIIT）','倒立、下腰等动作','腹部加压训练（卷腹、仰卧起坐）','剧烈球类运动','游泳（水温低易受凉）'], recommend: ['温和散步（30分钟）','简单瑜伽（猫牛式、婴儿式）','拉伸放松','深呼吸放松练习','经期第1-2天以休息为主'] },
+  life: { title: '🌸 生活注意', avoid: ['熬夜','久坐不动','情绪激动','冷水洗澡/洗头','穿紧身裤'], recommend: ['保暖腹部','充足睡眠（8小时以上）','喝温水（每天1500ml以上）','勤换卫生巾','放松心情'] },
+  pre: { title: '⏰ 经前2-3天提醒', items: ['月经即将来临，请做好准备','准备卫生用品','开始注意保暖，避免冷饮','减少高强度运动','保持情绪稳定','可以喝点红糖姜茶暖宫'] }
+};
+
+function loadData() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { return {}; } }
+function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function getTodayStr() { return formatDate(new Date()); }
+function formatDate(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function weekdayCN(s) { const days = ['日','一','二','三','四','五','六']; return '周' + days[parseDate(s).getDay()]; }
+function daysBetween(a, b) { return Math.round((parseDate(b) - parseDate(a)) / 86400000); }
+function formatTime(mins) { return String(Math.floor(mins/60)).padStart(2,'0') + ':' + String(mins%60).padStart(2,'0'); }
+
+let allData = migrateData();
+if (Object.keys(allData).length > 0) saveData(allData);
+let currentDate = getTodayStr();
+if (!allData._config) allData._config = { cycleDays: 28, periodDays: 5 };
+if (!allData._periods) allData._periods = [];
+if (!allData._album) allData._album = [];
+let currentPhotoIndex = -1;
+
+function getDayData(date) {
+  if (!allData[date]) allData[date] = { sleep: '', wake: '', diary: [], checkins: {} };
+  if (!allData[date].checkins) allData[date].checkins = {};
+  if (!allData[date].diary) allData[date].diary = [];
+  return allData[date];
+}
+
+// === 睡眠 ===
+// 智能跨日计算：sleep/wake 为 'HH:MM'，返回分钟数
+function calcSleepMins(sleep, wake) {
+  const [sh, sm] = sleep.split(':').map(Number);
+  const [wh, wm] = wake.split(':').map(Number);
+  let mins = (wh*60 + wm) - (sh*60 + sm);
+  if (mins < 0) mins += 1440;            // 跨日：起床早于入睡
+  if (mins > 960) {
+    const adjusted = mins - 720;
+    if (adjusted >= 90 && adjusted <= 960) mins = adjusted;
+  }
+  return mins;
+}
+// 4位数字自动格式化：输 0205 自动变 02:05
+function autoFormatTime(input) {
+  let v = input.value.replace(/\D/g, '');
+  if (v.length > 4) v = v.slice(0, 4);
+  if (v.length === 4) input.value = v.slice(0,2) + ':' + v.slice(2);
+  else input.value = v;
+}
+// 失焦时补全：输 235 自动变 02:35（前面补0）
+function finalizeTime(input) {
+  let v = input.value.replace(/\D/g, '');
+  if (v.length === 0) return;
+  if (v.length <= 2) { input.value = v.padStart(2,'0') + ':00'; return; }
+  if (v.length === 3) v = '0' + v;
+  const h = parseInt(v.slice(0,2)), m = parseInt(v.slice(2));
+  if (h > 23 || m > 59) { showToast('时间不对，请检查'); input.value = ''; return; }
+  input.value = v.slice(0,2) + ':' + v.slice(2);
+  // 触发保存
+  if (input.id === 'sleepTime') { getDayData(currentDate).sleep = input.value; saveData(allData); renderSleep(); renderHeatmap(); renderHistory(); renderAnalysis(); }
+  if (input.id === 'wakeTime') { getDayData(currentDate).wake = input.value; saveData(allData); renderSleep(); renderHeatmap(); renderHistory(); renderAnalysis(); }
+}
+function renderSleep() {
+  const day = getDayData(currentDate);
+  document.getElementById('sleepTime').value = day.sleep || '';
+  document.getElementById('wakeTime').value = day.wake || '';
+  const result = document.getElementById('sleepResult');
+  if (day.sleep && day.wake) {
+    const mins = calcSleepMins(day.sleep, day.wake);
+    const hours = (mins/60).toFixed(1);
+    let txt = '睡眠 ' + hours + ' 小时';
+    if (mins >= 420 && mins <= 540) txt += ' · 充足 ✓';
+    else if (mins >= 360) txt += ' · 尚可';
+    else if (mins > 0) txt += ' · 不足';
+    const [sh] = day.sleep.split(':').map(Number);
+    if (sh < 23) txt += ' · 早睡✓';
+    else txt += ' · 偏晚';
+    result.textContent = txt;
+  } else { result.textContent = ''; }
+}
+
+// === 打卡 ===
+function getCheckinData(date, taskId) { return getDayData(date).checkins[taskId] || 0; }
+function setCheckinData(date, taskId, count) { getDayData(date).checkins[taskId] = Math.max(0, count); saveData(allData); }
+function getWeekCheckinCount(taskId) {
+  const today = parseDate(getTodayStr());
+  const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay());
+  let count = 0;
+  for (let i = 0; i < 7; i++) { const d = new Date(weekStart); d.setDate(weekStart.getDate() + i); count += getCheckinData(formatDate(d), taskId); }
+  return count;
+}
+function getTotalCheckinCount(taskId) {
+  let count = 0;
+  Object.keys(allData).forEach(d => { if (/^\d{4}-\d{2}-\d{2}$/.test(d) && allData[d].checkins && allData[d].checkins[taskId]) count += allData[d].checkins[taskId]; });
+  return count;
+}
+function renderCheckins() {
+  const grid = document.getElementById('checkinGrid');
+  grid.innerHTML = '';
+  CHECKIN_TASKS.forEach(t => {
+    const todayCount = getCheckinData(currentDate, t.id);
+    const isDay = !t.targetType || t.targetType === 'day';
+    const progressCount = isDay ? todayCount : getWeekCheckinCount(t.id);
+    const progressTarget = t.target;
+    const progressLabel = isDay ? '今日 ' + todayCount + '/' + t.target : '本周 ' + progressCount + '/' + t.target;
+    const pct = Math.min(100, Math.round(progressCount / progressTarget * 100));
+    const isDone = progressCount >= progressTarget;
+    const total = getTotalCheckinCount(t.id);
+    const card = document.createElement('div');
+    card.className = 'checkin-card';
+    card.innerHTML = '<div class="checkin-header"><div><div class="checkin-name">' + t.name + '</div><div class="checkin-desc">' + t.desc + '</div></div><div class="checkin-controls"><button class="checkin-btn minus" onclick="adjustCheckin(\'' + t.id + '\', -1)">−</button><span class="checkin-count" style="color:' + t.color + '">' + todayCount + '</span><button class="checkin-btn plus" onclick="adjustCheckin(\'' + t.id + '\', 1)">+</button></div></div>' +
+      '<div class="checkin-progress"><div class="checkin-progress-bar"><div class="checkin-progress-fill" style="width:' + pct + '%;background:' + t.color + '"></div></div><div class="checkin-footer"><span class="checkin-target ' + (isDone ? 'done' : '') + '">' + progressLabel + (isDone ? ' ✓' : '') + '</span><span>累计 ' + total + ' 次</span></div></div>';
+    grid.appendChild(card);
+  });
+}
+function adjustCheckin(taskId, delta) {
+  const current = getCheckinData(currentDate, taskId);
+  setCheckinData(currentDate, taskId, current + delta);
+  renderCheckins(); renderHeatmap(); renderHistory(); renderAnalysis();
+  if (delta > 0) showToast('打卡 +1 ✓');
+}
+
+// === 相册 ===
+function renderAlbum() {
+  const sorted = allData._album.slice().sort((a,b) => b.date.localeCompare(a.date));
+  const count = sorted.length;
+  const countEl = document.getElementById('albumCount2');
+  if (countEl) countEl.textContent = count + ' 张';
+  const grid = document.getElementById('albumGrid2');
+  if (!grid) return;
+  const addBtn = '<div class="album-item album-add" onclick="document.getElementById(\'albumInput2\').click()"><span>＋</span><span>添加</span></div>';
+  if (sorted.length === 0) { grid.innerHTML = addBtn; return; }
+  let html = addBtn;
+  sorted.forEach((photo, idx) => { html += '<div class="album-item" onclick="openModal(' + idx + ')"><img src="' + photo.data + '" alt=""><div class="album-date">' + photo.date + '</div></div>'; });
+  grid.innerHTML = html;
+}
+function handleAlbumUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    compressImage(e.target.result, 800, function(compressed) {
+      allData._album.push({ date: currentDate, data: compressed });
+      saveData(allData);
+      renderAlbum();
+      showToast('照片已保存 📸');
+    });
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+function compressImage(dataUrl, maxWidth, callback) {
+  const img = new Image();
+  img.onload = function() {
+    let w = img.width, h = img.height;
+    if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    callback(canvas.toDataURL('image/jpeg', 0.7));
+  };
+  img.src = dataUrl;
+}
+function openModal(idx) {
+  const sorted = allData._album.slice().sort((a,b) => b.date.localeCompare(a.date));
+  currentPhotoIndex = idx;
+  document.getElementById('modalImg').src = sorted[idx].data;
+  document.getElementById('modalInfo').textContent = sorted[idx].date + ' · 第 ' + (sorted.length - idx) + ' 张';
+  document.getElementById('albumModal').classList.add('active');
+}
+function closeModal(e) {
+  if (e.target.id === 'albumModal' || e.target.className === 'modal-close') {
+    document.getElementById('albumModal').classList.remove('active');
+    currentPhotoIndex = -1;
+  }
+}
+function deleteCurrentPhoto() {
+  if (currentPhotoIndex < 0) return;
+  if (!confirm('确定删除这张照片吗？')) return;
+  const sorted = allData._album.slice().sort((a,b) => b.date.localeCompare(a.date));
+  const photo = sorted[currentPhotoIndex];
+  allData._album = allData._album.filter(p => !(p.date === photo.date && p.data === photo.data));
+  saveData(allData);
+  renderAlbum();
+  document.getElementById('albumModal').classList.remove('active');
+  currentPhotoIndex = -1;
+  showToast('已删除');
+}
+
+// === 日记 ===
+function renderDiary() {
+  const day = getDayData(currentDate);
+  const list = document.getElementById('diaryList');
+  list.innerHTML = '';
+  if (day.diary.length === 0) day.diary = [''];
+  day.diary.forEach((text, idx) => {
+    const entry = document.createElement('div');
+    entry.className = 'diary-entry';
+    entry.innerHTML = '<textarea class="diary-entry-input" placeholder="今天做了什么事..." oninput="updateDiaryEntry(' + idx + ', this.value)">' + (text || '') + '</textarea><button class="diary-entry-del" onclick="removeDiaryEntry(' + idx + ')">✕</button>';
+    list.appendChild(entry);
+  });
+  document.getElementById('diaryCount').textContent = day.diary.filter(t => t && t.trim()).length + ' 条';
+}
+function addDiaryEntry() {
+  getDayData(currentDate).diary.push('');
+  saveData(allData);
+  renderDiary();
+  setTimeout(() => { const inputs = document.querySelectorAll('.diary-entry-input'); if (inputs.length > 0) inputs[inputs.length - 1].focus(); }, 100);
+}
+function removeDiaryEntry(idx) {
+  const day = getDayData(currentDate);
+  day.diary.splice(idx, 1);
+  if (day.diary.length === 0) day.diary = [''];
+  saveData(allData);
+  renderDiary();
+}
+function updateDiaryEntry(idx, value) {
+  const day = getDayData(currentDate);
+  day.diary[idx] = value;
+  document.getElementById('diaryCount').textContent = day.diary.filter(t => t && t.trim()).length + ' 条';
+}
+function saveDiary() {
+  const day = getDayData(currentDate);
+  day.diary = day.diary.filter(t => t && t.trim());
+  if (day.diary.length === 0) day.diary = [''];
+  saveData(allData);
+  renderDiary(); renderHistory(); renderAnalysis();
+  showToast('日记已保存 ✓');
+}
+
+// === 每日计划（条框结构同日记） ===
+function renderPlan() {
+  const day = getDayData(currentDate);
+  if (!day.plan) day.plan = [''];
+  const list = document.getElementById('planList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (day.plan.length === 0) day.plan = [''];
+  day.plan.forEach((text, idx) => {
+    const entry = document.createElement('div');
+    entry.className = 'diary-entry';
+    entry.innerHTML = '<textarea class="diary-entry-input" placeholder="今天计划做什么..." oninput="updatePlanEntry(' + idx + ', this.value)">' + (text || '') + '</textarea><button class="diary-entry-del" onclick="removePlanEntry(' + idx + ')">✕</button>';
+    list.appendChild(entry);
+  });
+  const pc = document.getElementById('planCount');
+  if (pc) pc.textContent = day.plan.filter(t => t && t.trim()).length + ' 条';
+}
+function addPlanEntry() {
+  const day = getDayData(currentDate);
+  if (!day.plan) day.plan = [];
+  day.plan.push('');
+  saveData(allData);
+  renderPlan();
+  setTimeout(() => { const inputs = document.querySelectorAll('#planList .diary-entry-input'); if (inputs.length > 0) inputs[inputs.length - 1].focus(); }, 100);
+}
+function removePlanEntry(idx) {
+  const day = getDayData(currentDate);
+  if (!day.plan) day.plan = [''];
+  day.plan.splice(idx, 1);
+  if (day.plan.length === 0) day.plan = [''];
+  saveData(allData);
+  renderPlan();
+}
+function updatePlanEntry(idx, value) {
+  const day = getDayData(currentDate);
+  if (!day.plan) day.plan = [''];
+  day.plan[idx] = value;
+  const pc = document.getElementById('planCount');
+  if (pc) pc.textContent = day.plan.filter(t => t && t.trim()).length + ' 条';
+}
+function savePlan() {
+  const day = getDayData(currentDate);
+  if (!day.plan) day.plan = [''];
+  day.plan = day.plan.filter(t => t && t.trim());
+  if (day.plan.length === 0) day.plan = [''];
+  saveData(allData);
+  renderPlan();
+  showToast('计划已保存 ✓');
+}
+
+// === 经期 ===
+function startPeriod() {
+  const ongoing = allData._periods.find(p => !p.end);
+  if (ongoing) ongoing.end = currentDate;
+  allData._periods.push({ start: currentDate, end: null });
+  saveData(allData); renderAll();
+  showToast('已记录经期开始 🌸', 'pink');
+}
+function endPeriod() {
+  const ongoing = allData._periods.find(p => !p.end);
+  if (ongoing) { ongoing.end = currentDate; saveData(allData); renderAll(); showToast('已记录经期结束 ✓'); }
+}
+function updateCycleDays(val) { allData._config.cycleDays = parseInt(val) || 28; saveData(allData); renderPeriod(); renderAnalysis(); }
+function updatePeriodDays(val) { allData._config.periodDays = parseInt(val) || 5; saveData(allData); renderPeriod(); }
+function isPeriodActive(dateStr) { return allData._periods.some(p => !p.end ? p.start <= dateStr : p.start <= dateStr && p.end >= dateStr); }
+function getLastPeriodStart() { const s = allData._periods.slice().sort((a,b) => b.start.localeCompare(a.start)); return s.length > 0 ? s[0].start : null; }
+function getAvgCycle() {
+  const c = allData._periods.filter(p => p.end).sort((a,b) => a.start.localeCompare(b.start));
+  if (c.length < 2) return allData._config.cycleDays;
+  const cycles = [];
+  for (let i = 1; i < c.length; i++) cycles.push(daysBetween(c[i-1].start, c[i].start));
+  return Math.round(cycles.reduce((a,b)=>a+b,0) / cycles.length);
+}
+function renderPeriod() {
+  const box = document.getElementById('periodStatusBox');
+  const isActive = isPeriodActive(currentDate);
+  const lastStart = getLastPeriodStart();
+  const avgCycle = getAvgCycle();
+  const todayStr = getTodayStr();
+  const startBtn = document.getElementById('periodStartBtn');
+  const endBtn = document.getElementById('periodEndBtn');
+
+  if (isActive) {
+    box.className = 'period-status-box active';
+    document.getElementById('psIcon').textContent = '🩸';
+    document.getElementById('psText').textContent = '经期进行中';
+    const ongoing = allData._periods.find(p => !p.end);
+    document.getElementById('psSub').textContent = '第 ' + (daysBetween(ongoing.start, currentDate) + 1) + ' 天 · 注意保暖休息';
+    startBtn.disabled = true; endBtn.disabled = false;
+  } else if (lastStart) {
+    const nextDate = new Date(parseDate(lastStart)); nextDate.setDate(nextDate.getDate() + avgCycle);
+    const nextStr = formatDate(nextDate);
+    const daysLeft = daysBetween(todayStr, nextStr);
+    if (daysLeft > 0 && daysLeft <= 3) {
+      box.className = 'period-status-box alert';
+      document.getElementById('psIcon').textContent = '⏰';
+      document.getElementById('psText').textContent = '经期即将来临';
+      document.getElementById('psSub').textContent = '预计 ' + daysLeft + ' 天后来月经 · 请做好准备';
+    } else if (daysLeft <= 0) {
+      box.className = 'period-status-box alert';
+      document.getElementById('psIcon').textContent = '⏰';
+      document.getElementById('psText').textContent = '经期可能已开始';
+      document.getElementById('psSub').textContent = '预计经期已到 · 如来了请点击下方按钮';
+    } else {
+      box.className = 'period-status-box';
+      document.getElementById('psIcon').textContent = '🌸';
+      document.getElementById('psText').textContent = '经期周期中';
+      document.getElementById('psSub').textContent = '距下次约 ' + daysLeft + ' 天 · 预计 ' + nextStr;
+    }
+    startBtn.disabled = false; endBtn.disabled = true;
+  } else {
+    box.className = 'period-status-box';
+    document.getElementById('psIcon').textContent = '🌸';
+    document.getElementById('psText').textContent = '点击下方按钮记录';
+    document.getElementById('psSub').textContent = '开始记录你的经期周期';
+    startBtn.disabled = false; endBtn.disabled = true;
+  }
+
+  const noticeCard = document.getElementById('periodNoticeCard');
+  if (isActive) {
+    noticeCard.style.display = 'block';
+    document.getElementById('noticeCardTitle').textContent = '经期注意事项';
+    document.getElementById('periodNoticeBox').innerHTML = renderNoticeList();
+  } else if (lastStart) {
+    const nextDate = new Date(parseDate(lastStart)); nextDate.setDate(nextDate.getDate() + avgCycle);
+    const daysLeft = daysBetween(todayStr, formatDate(nextDate));
+    if (daysLeft > 0 && daysLeft <= 3) {
+      noticeCard.style.display = 'block';
+      document.getElementById('noticeCardTitle').textContent = '⏰ 经前提醒';
+      document.getElementById('periodNoticeBox').innerHTML = renderPreNotice();
+    } else { noticeCard.style.display = 'none'; }
+  } else { noticeCard.style.display = 'none'; }
+
+  const histList = document.getElementById('periodHistoryList');
+  const sorted = allData._periods.slice().sort((a,b) => b.start.localeCompare(a.start));
+  if (sorted.length === 0) {
+    histList.innerHTML = '<div class="history-empty">还没有经期记录<br>点击「来月经了」开始记录</div>';
+  } else {
+    histList.innerHTML = sorted.map((p, i) => {
+      const end = p.end || '进行中';
+      const duration = p.end ? daysBetween(p.start, p.end) + 1 + ' 天' : '进行中';
+      let cycleInfo = '';
+      if (i < sorted.length - 1 && p.end) cycleInfo = '周期 ' + daysBetween(sorted[i+1].start, p.start) + ' 天';
+      return '<div class="period-history-item"><div class="phi-row"><span>' + p.start + ' → ' + end + '</span><span style="color:var(--accent)">' + duration + '</span></div>' + (cycleInfo ? '<div class="phi-duration">' + cycleInfo + '</div>' : '') + '</div>';
+    }).join('');
+  }
+  document.getElementById('cycleDaysInput').value = allData._config.cycleDays;
+  document.getElementById('periodDaysInput').value = allData._config.periodDays;
+
+  renderPeriodReminder();
+  updateMenuBadge();
+}
+function updateMenuBadge() {
+  const todayStr = getTodayStr();
+  const lastStart = getLastPeriodStart();
+  const avgCycle = getAvgCycle();
+  const isActive = isPeriodActive(todayStr);
+  const nextDays = lastStart ? daysBetween(todayStr, formatDate(new Date(parseDate(lastStart).getTime() + avgCycle * 86400000))) : 999;
+  const needsBadge = isActive || (nextDays > 0 && nextDays <= 3);
+  const oldBadge = document.querySelector('#menuPeriod .menu-badge');
+  if (oldBadge) oldBadge.remove();
+  if (needsBadge) {
+    const b = document.createElement('div'); b.className = 'menu-badge';
+    document.getElementById('menuPeriod').appendChild(b);
+  }
+}
+function renderPeriodReminder() {
+  const reminder = document.getElementById('periodReminder');
+  const isActive = isPeriodActive(getTodayStr());
+  const lastStart = getLastPeriodStart();
+  const avgCycle = getAvgCycle();
+  if (isActive) {
+    reminder.style.display = 'block';
+    reminder.className = 'period-reminder active';
+    document.getElementById('prIcon').textContent = '🩸';
+    document.getElementById('prTitle').textContent = '经期进行中';
+    document.getElementById('prStatus').textContent = '经期中';
+    document.getElementById('prStatus').className = 'pr-status active';
+    const ongoing = allData._periods.find(p => !p.end);
+    document.getElementById('prContent').textContent = '第 ' + (daysBetween(ongoing.start, getTodayStr()) + 1) + ' 天 · 注意保暖补铁，避免生冷辛辣，减少高强度运动';
+  } else if (lastStart) {
+    const nextDate = new Date(parseDate(lastStart)); nextDate.setDate(nextDate.getDate() + avgCycle);
+    const daysLeft = daysBetween(getTodayStr(), formatDate(nextDate));
+    if (daysLeft > 0 && daysLeft <= 3) {
+      reminder.style.display = 'block';
+      reminder.className = 'period-reminder alert';
+      document.getElementById('prIcon').textContent = '⏰';
+      document.getElementById('prTitle').textContent = '经期即将来临';
+      document.getElementById('prStatus').textContent = daysLeft + '天后';
+      document.getElementById('prStatus').className = 'pr-status alert';
+      document.getElementById('prContent').textContent = '预计 ' + daysLeft + ' 天后来月经。请准备卫生用品，开始注意保暖，避免冷饮。';
+    } else { reminder.style.display = 'none'; }
+  } else { reminder.style.display = 'none'; }
+}
+function renderNoticeList() {
+  let html = '';
+  ['diet','exercise','life'].forEach(key => {
+    const n = PERIOD_NOTICES[key];
+    html += '<div class="notice-section"><div class="ns-title">' + n.title + '</div><ul class="notice-list">';
+    n.avoid.forEach(item => html += '<li class="avoid">' + item + '</li>');
+    n.recommend.forEach(item => html += '<li class="recommend">' + item + '</li>');
+    html += '</ul></div>';
+  });
+  return html;
+}
+function renderPreNotice() {
+  const pre = PERIOD_NOTICES.pre;
+  let html = '<div class="notice-section"><div class="ns-title">' + pre.title + '</div><ul class="notice-list">';
+  pre.items.forEach(item => html += '<li>' + item + '</li>');
+  html += '</ul></div>';
+  return html;
+}
+
+function renderStats() {
+  const today = parseDate(getTodayStr());
+  const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay());
+  let weekSleepDays = 0;
+  for (let i=0; i<7; i++) {
+    const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
+    const ds = formatDate(d);
+    if (allData[ds] && allData[ds].sleep && allData[ds].wake) weekSleepDays++;
+  }
+  document.getElementById('weekSleepDays').textContent = weekSleepDays;
+  let totalDays = 0;
+  Object.keys(allData).forEach(d => { if (/^\d{4}-\d{2}-\d{2}$/.test(d)) totalDays++; });
+  document.getElementById('totalDays').textContent = totalDays;
+}
+
+function renderHeatmap() {
+  const wrap = document.getElementById('heatmap');
+  wrap.innerHTML = '';
+  const today = parseDate(getTodayStr());
+  for (let i=29; i>=0; i--) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    const ds = formatDate(d);
+    let level = 0, isPeriod = isPeriodActive(ds);
+    if (allData[ds]) {
+      let done = 0;
+      if (allData[ds].sleep && allData[ds].wake) done++;
+      if (allData[ds].checkins) CHECKIN_TASKS.forEach(t => { if (allData[ds].checkins[t.id] > 0) done++; });
+      if (allData[ds].diary && allData[ds].diary.filter(x => x && x.trim()).length > 0) done++;
+      if (done >= 4) level = 4;
+      else if (done >= 3) level = 3;
+      else if (done >= 2) level = 2;
+      else if (done >= 1) level = 1;
+    }
+    let cls = 'heat-cell l' + level;
+    if (isPeriod) cls += ' period';
+    if (ds === getTodayStr()) cls += ' today';
+    const cell = document.createElement('div');
+    cell.className = cls;
+    const mmdd = (d.getMonth()+1) + '/' + d.getDate();
+    let tip = mmdd;
+    if (isPeriod) tip += ' · 🌸经期';
+    if (level > 0) tip += ' · 有记录';
+    else if (!isPeriod) tip += ' · 无记录';
+    cell.innerHTML = '<span class="heat-tooltip">' + tip + '</span>';
+    cell.onclick = () => { currentDate = ds; switchPage('today'); renderAll(); };
+    wrap.appendChild(cell);
+  }
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const dates = Object.keys(allData).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort().reverse();
+  if (dates.length === 0) { list.innerHTML = '<div class="history-empty">还没有历史记录<br>从今天开始吧 ✨</div>'; return; }
+  list.innerHTML = '';
+  dates.slice(0, 30).forEach(ds => {
+    const day = allData[ds];
+    const isPeriod = isPeriodActive(ds);
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    let tags = '';
+    if (day.sleep && day.wake) {
+      const mins = calcSleepMins(day.sleep, day.wake);
+      tags += '<span class="hi-tag sleep">🌙 ' + day.sleep + '-' + day.wake + ' (' + (mins/60).toFixed(1) + 'h)</span>';
+    }
+    if (isPeriod) tags += '<span class="hi-tag period">🌸经期</span>';
+    if (day.checkins) {
+      CHECKIN_TASKS.forEach(t => {
+        const c = day.checkins[t.id] || 0;
+        if (c > 0) tags += '<span class="hi-tag checkin" style="background:' + t.color + '22;color:' + t.color + ';border-color:' + t.color + '22">' + t.name + ' ×' + c + '</span>';
+      });
+    }
+    let diaryHtml = '';
+    if (day.diary && day.diary.filter(x => x && x.trim()).length > 0) {
+      diaryHtml = '<div class="hi-diary">' + day.diary.filter(x => x && x.trim()).map(x => '<div class="hi-diary-item">• ' + x.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>').join('') + '</div>';
+    }
+    item.innerHTML = '<div class="hi-date">' + ds + ' ' + weekdayCN(ds) + '</div>' + (tags ? '<div class="hi-tags">' + tags + '</div>' : '') + diaryHtml;
+    list.appendChild(item);
+  });
+}
+
+function renderAnalysis() {
+  const today = parseDate(getTodayStr());
+  let sleepMins = [], sleepTimes = [], wakeTimes = [], earlyCount = 0, enoughCount = 0, sleepTotal = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    const ds = formatDate(d);
+    if (allData[ds] && allData[ds].sleep && allData[ds].wake) {
+      const mins = calcSleepMins(allData[ds].sleep, allData[ds].wake);
+      const [sh, sm] = allData[ds].sleep.split(':').map(Number);
+      const [wh, wm] = allData[ds].wake.split(':').map(Number);
+      sleepMins.push(mins); sleepTimes.push(sh*60+sm); wakeTimes.push(wh*60+wm);
+      sleepTotal++;
+      // 早睡定义：22:00-22:59 之前入睡（不含23点后及凌晨）
+      if (sh >= 20 && sh < 23) earlyCount++;
+      if (mins >= 420) enoughCount++;
+    }
+  }
+  if (sleepMins.length > 0) {
+    const avgMins = Math.round(sleepMins.reduce((a,b)=>a+b,0) / sleepMins.length);
+    document.getElementById('avgSleep').textContent = Math.floor(avgMins/60) + '小时' + (avgMins%60) + '分';
+    document.getElementById('avgSleepTime').textContent = formatTime(Math.round(sleepTimes.reduce((a,b)=>a+b,0)/sleepTimes.length));
+    document.getElementById('avgWakeTime').textContent = formatTime(Math.round(wakeTimes.reduce((a,b)=>a+b,0)/wakeTimes.length));
+    document.getElementById('earlySleepRate').textContent = Math.round(earlyCount/sleepTotal*100) + '% (' + earlyCount + '/' + sleepTotal + ')';
+    document.getElementById('enoughSleepRate').textContent = Math.round(enoughCount/sleepTotal*100) + '% (' + enoughCount + '/' + sleepTotal + ')';
+  } else {
+    document.getElementById('avgSleep').textContent = '—';
+    ['avgSleepTime','avgWakeTime','earlySleepRate','enoughSleepRate'].forEach(id => document.getElementById(id).textContent = '—');
+  }
+
+  const checkinList = document.getElementById('checkinAnalysisList');
+  let checkinHtml = '';
+  CHECKIN_TASKS.forEach(t => {
+    const total = getTotalCheckinCount(t.id);
+    const weekCount = getWeekCheckinCount(t.id);
+    let maxStreak = 0, curStreak = 0;
+    const sortedDates = Object.keys(allData).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+    sortedDates.forEach(d => {
+      if (allData[d].checkins && allData[d].checkins[t.id] > 0) { curStreak++; if (curStreak > maxStreak) maxStreak = curStreak; }
+      else curStreak = 0;
+    });
+    checkinHtml += '<div class="analysis-row"><span class="ar-label">' + t.name + ' 累计</span><span class="ar-value">' + total + ' 次</span></div>';
+    checkinHtml += '<div class="analysis-row"><span class="ar-label">本周完成</span><span class="ar-value">' + weekCount + '/' + t.target + (weekCount >= t.target ? ' ✓' : '') + '</span></div>';
+    checkinHtml += '<div class="analysis-row"><span class="ar-label">最长连续天数</span><span class="ar-value">' + maxStreak + ' 天</span></div>';
+  });
+  checkinList.innerHTML = checkinHtml;
+
+  const lastStart = getLastPeriodStart();
+  const avgCycle = getAvgCycle();
+  const completed = allData._periods.filter(p => p.end).sort((a,b) => a.start.localeCompare(b.start));
+  if (allData._periods.length === 0) {
+    document.getElementById('periodCycle').textContent = '—';
+    document.getElementById('periodCycleDesc').textContent = '还没有经期记录';
+    ['lastPeriod','nextPeriod','daysToNext','periodRegularity'].forEach(id => document.getElementById(id).textContent = '—');
+  } else {
+    document.getElementById('lastPeriod').textContent = lastStart;
+    if (completed.length >= 2) {
+      const cycles = [];
+      for (let i = 1; i < completed.length; i++) cycles.push(daysBetween(completed[i-1].start, completed[i].start));
+      const stdDev = Math.sqrt(cycles.reduce((s,c)=>s+Math.pow(c-avgCycle,2),0)/cycles.length);
+      let reg = '规律';
+      if (stdDev > 7) reg = '不规律';
+      else if (stdDev > 3) reg = '基本规律';
+      document.getElementById('periodCycle').textContent = avgCycle + ' 天';
+      document.getElementById('periodCycleDesc').textContent = '基于 ' + cycles.length + ' 次记录的平均周期';
+      document.getElementById('periodRegularity').textContent = reg + ' (波动±' + Math.round(stdDev) + '天)';
+    } else {
+      document.getElementById('periodCycle').textContent = '~' + avgCycle + ' 天';
+      document.getElementById('periodCycleDesc').textContent = '默认周期，需2次以上记录计算';
+      document.getElementById('periodRegularity').textContent = '数据不足';
+    }
+    const next = new Date(parseDate(lastStart)); next.setDate(next.getDate() + avgCycle);
+    const nextStr = formatDate(next);
+    document.getElementById('nextPeriod').textContent = nextStr;
+    const daysLeft = daysBetween(getTodayStr(), nextStr);
+    document.getElementById('daysToNext').textContent = daysLeft > 0 ? daysLeft + ' 天' : '已过/进行中';
+  }
+
+  const isActive = isPeriodActive(getTodayStr());
+  const insights = [];
+  CHECKIN_TASKS.forEach(t => {
+    const total = getTotalCheckinCount(t.id);
+    const weekCount = getWeekCheckinCount(t.id);
+    if (total === 0) insights.push({ title: t.name + '起步', text: '还没开始' + t.name + '打卡。今天先做一次。' });
+    else if (weekCount < t.target) insights.push({ title: t.name + '本周进度', text: '本周已完成' + weekCount + '/' + t.target + '次，还差' + (t.target - weekCount) + '次。' });
+    else insights.push({ title: t.name + '达标', text: '本周已完成' + t.target + '次，继续保持！' });
+  });
+  if (sleepTotal > 0 && enoughCount / sleepTotal < 0.5) insights.push({ title: '睡眠不足预警', text: '近7天只有' + Math.round(enoughCount/sleepTotal*100) + '%睡够7小时。23点前入睡。' });
+  else if (sleepTotal > 0) insights.push({ title: '睡眠改善', text: '近7天有' + enoughCount + '天睡够了7小时，继续保持。' });
+  if (isActive) insights.push({ title: '经期关怀', text: '经期期间注意保暖补铁，避免生冷辛辣。' });
+  else if (lastStart && daysBetween(getTodayStr(), formatDate(new Date(parseDate(lastStart).getTime()+avgCycle*86400000))) <= 3) insights.push({ title: '经前提醒', text: '月经即将来临，准备好卫生用品。' });
+  document.getElementById('insightBox').innerHTML = insights.map(i => '<div style="margin-bottom:10px"><div class="insight-title">' + i.title + '</div><div>' + i.text + '</div></div>').join('');
+}
+
+function renderTopDate() {
+  const d = parseDate(currentDate);
+  document.getElementById('topDate').textContent = (d.getMonth()+1) + '月' + d.getDate() + '日 ' + weekdayCN(currentDate);
+  const dp = document.getElementById('datePicker');
+  if (dp) dp.value = currentDate;
+}
+function changeDate(val) {
+  if (!val) return;
+  currentDate = val;
+  saveData(allData);
+  renderAll();
+  showToast('已切换到 ' + val);
+}
+
+function renderAll() {
+  renderTopDate(); renderSleep(); renderPeriod(); renderCheckins(); renderDiary(); renderPlan();
+  renderAlbum(); renderStats(); renderHeatmap(); renderHistory(); renderAnalysis();
+}
+
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.menu-item').forEach(n => n.classList.toggle('active', n.dataset.page === name));
+  document.getElementById('topTitle').textContent = PAGE_TITLES[name] || '能量站';
+  document.querySelector('.content').scrollTop = 0;
+  if (name === 'analysis') renderAnalysis();
+  if (name === 'period') renderPeriod();
+  if (name === 'album') renderAlbum();
+  if (name === 'diary') renderDiary();
+  if (name === 'plan') renderPlan();
+}
+
+// 事件绑定
+// 睡眠输入由 onblur="finalizeTime(this)" 处理，无需 addEventListener
+
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+renderAll();
+</script>
+</body>
+</html>
